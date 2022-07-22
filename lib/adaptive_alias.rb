@@ -11,11 +11,12 @@ require 'adaptive_alias/hooks/relation'
 
 module AdaptiveAlias
   @log_interval = 10 * 60
+  @current_patches = {}
 
   class << self
     attr_accessor :unexpected_old_column_proc
     attr_accessor :log_interval
-    attr_accessor :current_patch
+    attr_accessor :current_patches
   end
 
   class << self
@@ -39,10 +40,16 @@ module AdaptiveAlias
     def run_with_statement_invalid_rescue(relation)
       begin
         yield
-      rescue ActiveRecord::StatementInvalid => e
-        AdaptiveAlias.current_patch.fix_association.call(relation, e)
+      rescue ActiveRecord::StatementInvalid => error
+        AdaptiveAlias.fix_association(relation, error)
         retry
       end
+    end
+
+    def fix_association(relation, error)
+      return if AdaptiveAlias.current_patches.any?{|_key, patch| patch.fix_association.call(relation, error) }
+
+      raise error
     end
   end
 end

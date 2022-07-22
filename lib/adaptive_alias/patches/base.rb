@@ -46,7 +46,8 @@ module AdaptiveAlias
         expected_error_message = "Mysql2::Error: Unknown column '#{@klass.table_name}.#{current_column}' in 'where clause'".freeze
 
         @fix_association = proc do |target, error|
-          raise error if patch.removed || error.message != expected_error_message
+          next false if patch.removed || error.message != expected_error_message
+
           patch.remove!
 
           if target
@@ -55,6 +56,8 @@ module AdaptiveAlias
             target.instance_variable_set(:@arel, nil)
             target.unscope!(:where).where!(where_values_hash)
           end
+
+          next true
         end
 
         ActiveRecord::Associations::SingularAssociation.prepend(

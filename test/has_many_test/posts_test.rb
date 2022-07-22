@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class HasManyAssociationTest < Minitest::Test
+class PostsTest < Minitest::Test
   def setup
   end
 

@@ -6,7 +6,7 @@ module AdaptiveAlias
   module Patches
     class ForwardPatch < Base
       def apply!
-        AdaptiveAlias.current_patch = self
+        AdaptiveAlias.current_patches[[@klass, @old_column, @new_column]] = self
         @klass.alias_attribute(@new_column, @old_column)
         add_hooks!(current_column: @old_column, alias_column: @new_column)
       end
