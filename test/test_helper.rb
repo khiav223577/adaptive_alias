@@ -6,7 +6,6 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'adaptive_alias'
 require 'active_record'
 
-require 'minitest/color'
 require 'minitest/autorun'
 
 ActiveRecord::Base.establish_connection(
