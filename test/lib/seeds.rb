@@ -6,19 +6,19 @@ ActiveRecord::Schema.define do
     t.integer :profile_id
   end
 
-  create_table :posts, :force => true do |t|
+  create_table :posts, force: true do |t|
     t.integer :user_id_old
     t.string :title
     t.boolean :active
   end
 
-  create_table :articles, :force => true do |t|
+  create_table :articles, force: true do |t|
     t.integer :user_id
     t.string :title
     t.boolean :active
   end
 
-  create_table :profiles, :force => true do |t|
+  create_table :profiles, force: true do |t|
     t.string :id_number
   end
 end

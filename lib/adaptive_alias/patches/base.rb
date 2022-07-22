@@ -21,13 +21,11 @@ module AdaptiveAlias
         @klass.prepend(
           Module.new do
             define_method(new_column) do
-              begin
-                self[new_column]
-              rescue ActiveModel::MissingAttributeError => e
-                raise e if patch.removed
-                patch.remove!
-                retry
-              end
+              self[new_column]
+            rescue ActiveModel::MissingAttributeError => e
+              raise e if patch.removed
+              patch.remove!
+              retry
             end
 
             define_method(old_column) do
@@ -41,7 +39,7 @@ module AdaptiveAlias
                 retry
               end
             end
-          end
+          end,
         )
 
         expected_error_message = "Mysql2::Error: Unknown column '#{@klass.table_name}.#{current_column}' in 'where clause'".freeze
@@ -59,7 +57,8 @@ module AdaptiveAlias
 
           if target
             where_values_hash = target.where_values_hash
-            where_values_hash[alias_column] = where_values_hash.delete(current_column) if where_values_hash.key?(current_column)
+            where_values_hash[alias_column] =
+where_values_hash.delete(current_column) if where_values_hash.key?(current_column)
             target.instance_variable_set(:@arel, nil)
             target.unscope!(:where).where!(where_values_hash)
           end

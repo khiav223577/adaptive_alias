@@ -6,13 +6,15 @@ class ArticlesTest < Minitest::Test
 
   def teardown
     # make suer to rollback db schema even if some test cases fail
-    Article.connection.rename_column :articles, :user_id_abc, :user_id rescue nil
+    Article.connection.rename_column :articles, :user_id_abc, :user_id
+  rescue
+    nil
   end
 
   def test_first
     user = User.find_by(name: 'Catty')
     assert_queries([
-      "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id} ORDER BY `articles`.`id` ASC LIMIT 1"
+      "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id} ORDER BY `articles`.`id` ASC LIMIT 1",
     ]) do
       assert_equal 'Article B1', user.articles.first.title
     end
@@ -44,7 +46,7 @@ class ArticlesTest < Minitest::Test
   def test_last
     user = User.find_by(name: 'Catty')
     assert_queries([
-      "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id} ORDER BY `articles`.`id` DESC LIMIT 1"
+      "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id} ORDER BY `articles`.`id` DESC LIMIT 1",
     ]) do
       assert_equal 'Article B3', user.articles.last.title
     end
@@ -76,7 +78,7 @@ class ArticlesTest < Minitest::Test
   def test_to_a
     user = User.find_by(name: 'Catty')
     assert_queries([
-      "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id}"
+      "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id}",
     ]) do
       assert_equal ['Article B1', 'Article B2', 'Article B3'], user.articles.map(&:title)
     end

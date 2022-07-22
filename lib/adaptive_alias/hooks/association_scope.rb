@@ -11,4 +11,3 @@ end
 class ActiveRecord::Associations::AssociationScope
   prepend AdaptiveAlias::Hooks::AssociationScope
 end
-

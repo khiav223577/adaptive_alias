@@ -5,7 +5,7 @@ module ActiveRecord::AttributeMethods::Read
     name = attr_name.to_s
     name = self.class.attribute_aliases[name] || name
 
-    name = @primary_key if name == "id" && @primary_key
+    name = @primary_key if name == 'id' && @primary_key
     _read_attribute(name, &block)
   end
 
