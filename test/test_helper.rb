@@ -12,16 +12,24 @@ require 'lib/mysql2_connection'
 
 require 'lib/seeds'
 
-def assert_queries(expected_count, event_key = 'sql.active_record')
+def assert_queries(expected, event_key = 'sql.active_record')
   sqls = []
   subscriber = ActiveSupport::Notifications.subscribe(event_key) do |_, _, _, _, payload|
-    sqls << "  ● #{payload[:sql]}" if payload[:sql] !~ /\A(?:BEGIN TRANSACTION|COMMIT TRANSACTION|BEGIN|COMMIT)\z/i
+    sqls << "#{payload[:sql]}" if payload[:sql] !~ /\A(?:BEGIN TRANSACTION|COMMIT TRANSACTION|BEGIN|COMMIT)\z/i
   end
+
   yield
-  if expected_count != sqls.size # show all sql queries if query count doesn't equal to expected count.
-    assert_equal "expect #{expected_count} queries, but have #{sqls.size}", "\n#{sqls.join("\n").tr('"', "'")}\n"
+
+  case expected
+  when Integer
+    if expected != sqls.size # show all sql queries if query count doesn't equal to expected count.
+      assert_equal "expect #{expected} queries, but have #{sqls.size}", "\n#{sqls.join("\n").tr('"', "'")}\n"
+    end
+
+    assert_equal expected, sqls.size
+  when Array
+    assert_equal expected, sqls
   end
-  assert_equal expected_count, sqls.size
 ensure
   ActiveSupport::Notifications.unsubscribe(subscriber)
 end

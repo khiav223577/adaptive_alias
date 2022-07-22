@@ -8,6 +8,7 @@ ActiveRecord::Schema.define do
   create_table :posts, :force => true do |t|
     t.integer :user_id_old
     t.string :title
+    t.boolean :active
   end
 end
 
@@ -20,7 +21,8 @@ users = User.create([
 ])
 
 Post.create([
-  { title: 'Post A1', user_id_old: users[0].id },
-  { title: 'Post B1', user_id_old: users[1].id },
-  { title: 'Post B2', user_id_old: users[1].id },
+  { title: 'Post A1', user_id_old: users[0].id, active: true },
+  { title: 'Post B1', user_id_old: users[1].id, active: false },
+  { title: 'Post B2', user_id_old: users[1].id, active: true },
+  { title: 'Post B3', user_id_old: users[1].id, active: false },
 ])

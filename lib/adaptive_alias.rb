@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'adaptive_alias/version'
 require 'adaptive_alias/patches/read_attribute'
 require 'adaptive_alias/patches/remove_alias_attribute'
