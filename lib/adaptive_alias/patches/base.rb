@@ -37,6 +37,7 @@ module AdaptiveAlias
           next false if patch.removed
 
           patch.remove!
+          next true
         end
 
         @fix_association = proc do |target, error|
