@@ -43,16 +43,14 @@ module AdaptiveAlias
     def rescue_statement_invalid(relation)
       yield
     rescue ActiveRecord::StatementInvalid => error
-      raise error if not AdaptiveAlias.current_patches.any? do |_key, patch|
-                       patch.fix_association.call(relation, error)
-                     end
+      raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_association.call(relation, error) }
       retry
     end
 
     def rescue_missing_attribute
       yield
     rescue ActiveModel::MissingAttributeError => error
-      raise error if not AdaptiveAlias.current_patches.any?{|_key, patch| patch.fix_missing_attribute.call }
+      raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_missing_attribute.call }
       retry
     end
 
