@@ -41,4 +41,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'backports', '~> 3.15.0'
 
   spec.add_dependency 'activerecord', '>= 3'
+  spec.add_dependency 'rails_compatibility', '>= 0.0.8'
 end
