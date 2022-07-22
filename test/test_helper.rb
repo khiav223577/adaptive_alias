@@ -3,7 +3,7 @@ SimpleCov.start 'test_frameworks'
 
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
-require 'gem_template'
+require 'adaptive_alias'
 require 'active_record'
 
 require 'minitest/color'
