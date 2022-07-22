@@ -134,4 +134,35 @@ class HasManyAssociationTest < Minitest::Test
       end
     end
   end
+
+  def test_pluck
+    user = User.find_by(name: 'Catty')
+    assert_queries([
+      "SELECT `posts`.`title` FROM `posts` WHERE `posts`.`user_id_old` = #{user.id}",
+    ]) do
+      assert_equal ['Post B1', 'Post B2', 'Post B3'], user.posts.pluck(:title)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Post.connection.rename_column :posts, :user_id_old, :user_id
+      user = User.find_by(name: 'Catty')
+      assert_queries([
+        "SELECT `posts`.`title` FROM `posts` WHERE `posts`.`user_id_old` = #{user.id}",
+        "SELECT `posts`.* FROM `posts` WHERE `posts`.`user_id` = #{user.id}",
+      ]) do
+        assert_equal ['Post B1', 'Post B2', 'Post B3'], user.posts.pluck(:title)
+      end
+
+      # --------- rollback rename migration ---------
+      Post.connection.rename_column :posts, :user_id, :user_id_old
+      user = User.find_by(name: 'Catty')
+      assert_queries([
+        "SELECT `posts`.`title` FROM `posts` WHERE `posts`.`user_id` = #{user.id}",
+        "SELECT `posts`.* FROM `posts` WHERE `posts`.`user_id_old` = #{user.id}",
+      ]) do
+        assert_equal ['Post B1', 'Post B2', 'Post B3'], user.posts.pluck(:title)
+      end
+    end
+  end
 end

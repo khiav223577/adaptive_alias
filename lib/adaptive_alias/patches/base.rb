@@ -76,16 +76,6 @@ module AdaptiveAlias
 
         ActiveRecord::Associations::CollectionProxy.prepend(
           Module.new do
-            define_method(:pluck) do |*column_names|
-              begin
-                super(*column_names)
-              rescue ActiveRecord::StatementInvalid => e
-                raise e if patch.removed || e.message != expected_error_message
-                patch.remove!
-                reload
-              end
-            end
-
             define_method(:load_target) do
               begin
                 super()
