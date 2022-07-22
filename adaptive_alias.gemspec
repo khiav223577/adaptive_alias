@@ -5,12 +5,12 @@ require 'adaptive_alias/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'adaptive_alias'
-  spec.version       = AdaptiveAlias::VERSION # adaptive_alias
+  spec.version       = AdaptiveAlias::VERSION
   spec.authors       = ['khiav reoy']
   spec.email         = ['mrtmrt15xn@yahoo.com.tw']
 
-  spec.summary       = 'gem summary' # adaptive_alias
-  spec.description   = 'gem description' # adaptive_alias
+  spec.summary       = 'Extend attribute_alias and make it be adaptive with realtime database schema'
+  spec.description   = 'Extend attribute_alias and make it be adaptive with realtime database schema'
   spec.homepage      = 'https://github.com/khiav223577/adaptive_alias'
   spec.license       = 'MIT'
 

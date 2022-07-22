@@ -6,9 +6,11 @@
 [![Code Climate](https://codeclimate.com/github/khiav223577/adaptive_alias/badges/gpa.svg)](https://codeclimate.com/github/khiav223577/adaptive_alias)
 [![Test Coverage](https://codeclimate.com/github/khiav223577/adaptive_alias/badges/coverage.svg)](https://codeclimate.com/github/khiav223577/adaptive_alias/coverage)
 
+Extend attribute_alias and make it be adaptive with realtime database schema.
+
 ## Supports
-- Ruby 2.2 ~ 2.7
-- Rails 3.2, 4.2, 5.0, 5.1, 5.2, 6.0
+- Ruby 2.6 ~ 2.7, 3.0 ~ 3.1
+- Rails 6.0, 6.1, 7.0
 
 ## Installation
 
