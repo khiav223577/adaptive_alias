@@ -8,7 +8,7 @@ module AdaptiveAlias
       def apply!
         AdaptiveAlias.current_patch = self
         @klass.alias_attribute(@old_column, @new_column)
-        add_hooks!(current_column: @new_column, log_warning: true)
+        add_hooks!(current_column: @new_column, alias_column: @old_column, log_warning: true)
       end
 
       def remove!

@@ -3,6 +3,7 @@
 module AdaptiveAlias
   module Patches
     class Base
+      attr_reader :fix_association
       attr_reader :removed
 
       def initialize(klass, old_column, new_column)
@@ -11,7 +12,7 @@ module AdaptiveAlias
         @new_column = new_column
       end
 
-      def add_hooks!(current_column:, log_warning: false)
+      def add_hooks!(current_column:, alias_column:, log_warning: false)
         patch = self
         old_column = @old_column
         new_column = @new_column
@@ -44,49 +45,17 @@ module AdaptiveAlias
 
         expected_error_message = "Mysql2::Error: Unknown column '#{@klass.table_name}.#{current_column}' in 'where clause'".freeze
 
-        wrapper_class = Class.new do
-          def initialize(target)
-            @target = target
-          end
+        @fix_association = proc do |target, error|
+          raise error if patch.removed || error.message != expected_error_message
+          patch.remove!
 
-          define_method(:reset_scope) do
-            @target.reset_scope
-            self
-          end
-
-          define_method(:method_missing) do |method_name, *args, &block|
-            begin
-              @target.send(method_name, *args, &block)
-            rescue ActiveRecord::StatementInvalid => e
-              raise e if patch.removed || e.message != expected_error_message
-              patch.remove!
-              @target.reload
-              retry
-            end
+          if target
+            where_values_hash = target.where_values_hash
+            where_values_hash[alias_column] = where_values_hash.delete(current_column) if where_values_hash.key?(current_column)
+            target.instance_variable_set(:@arel, nil)
+            target.unscope!(:where).where!(where_values_hash)
           end
         end
-
-        ActiveRecord::Associations::CollectionProxy.singleton_class.prepend(
-          Module.new do
-            define_method(:create) do |*args|
-              wrapper_class.new(super(*args))
-            end
-          end
-        )
-
-        ActiveRecord::Associations::CollectionProxy.prepend(
-          Module.new do
-            define_method(:load_target) do
-              begin
-                super()
-              rescue ActiveRecord::StatementInvalid => e
-                raise e if patch.removed || e.message != expected_error_message
-                patch.remove!
-                reload
-              end
-            end
-          end
-        )
 
         ActiveRecord::Associations::SingularAssociation.prepend(
           Module.new do
@@ -114,6 +83,7 @@ module AdaptiveAlias
         @removed = true
         @klass.send(:reload_schema_from_cache)
         @klass.initialize_find_by_cache
+        @fix_association = nil
       end
     end
   end

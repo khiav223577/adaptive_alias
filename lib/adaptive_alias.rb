@@ -6,6 +6,9 @@ require 'adaptive_alias/active_model_patches/remove_alias_attribute'
 require 'adaptive_alias/patches/back_patch'
 require 'adaptive_alias/patches/forward_patch'
 
+require 'adaptive_alias/hooks/association'
+require 'adaptive_alias/hooks/relation'
+
 module AdaptiveAlias
   @log_interval = 10 * 60
 
@@ -30,6 +33,15 @@ module AdaptiveAlias
             Patches::ForwardPatch.new(self, old_column, new_column).apply!
           end
         end
+      end
+    end
+
+    def run_with_statement_invalid_rescue(relation)
+      begin
+        yield
+      rescue ActiveRecord::StatementInvalid => e
+        AdaptiveAlias.current_patch.fix_association.call(relation, e)
+        retry
       end
     end
   end
