@@ -44,6 +44,36 @@ module AdaptiveAlias
 
         expected_error_message = "Mysql2::Error: Unknown column '#{@klass.table_name}.#{current_column}' in 'where clause'".freeze
 
+        wrapper_class = Class.new do
+          def initialize(target)
+            @target = target
+          end
+
+          define_method(:reset_scope) do
+            @target.reset_scope
+            self
+          end
+
+          define_method(:method_missing) do |method_name, *args, &block|
+            begin
+              @target.send(method_name, *args, &block)
+            rescue ActiveRecord::StatementInvalid => e
+              raise e if patch.removed || e.message != expected_error_message
+              patch.remove!
+              @target.reload
+              retry
+            end
+          end
+        end
+
+        ActiveRecord::Associations::CollectionProxy.singleton_class.prepend(
+          Module.new do
+            define_method(:create) do |*args|
+              wrapper_class.new(super(*args))
+            end
+          end
+        )
+
         ActiveRecord::Associations::CollectionProxy.prepend(
           Module.new do
             define_method(:pluck) do |*column_names|
