@@ -27,27 +27,31 @@ module AdaptiveAlias
       old_column = @old_column
       new_column = @new_column
 
-      @klass.define_method(new_column) do
-        begin
-          self[new_column]
-        rescue ActiveModel::MissingAttributeError => e
-          raise e if patch.removed
-          patch.remove!
-          retry
-        end
-      end
+      @klass.prepend(
+        Module.new do
+          define_method(new_column) do
+            begin
+              self[new_column]
+            rescue ActiveModel::MissingAttributeError => e
+              raise e if patch.removed
+              patch.remove!
+              retry
+            end
+          end
 
-      @klass.define_method(old_column) do
-        patch.log_warning if log_warning
+          define_method(old_column) do
+            patch.log_warning if log_warning
 
-        begin
-          self[old_column]
-        rescue ActiveModel::MissingAttributeError => e
-          raise e if patch.removed
-          patch.remove!
-          retry
+            begin
+              self[old_column]
+            rescue ActiveModel::MissingAttributeError => e
+              raise e if patch.removed
+              patch.remove!
+              retry
+            end
+          end
         end
-      end
+      )
 
       expected_error_message = "Mysql2::Error: Unknown column '#{@klass.table_name}.#{current_column}' in 'where clause'".freeze
 
