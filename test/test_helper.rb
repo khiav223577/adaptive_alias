@@ -12,6 +12,8 @@ require 'lib/mysql2_connection'
 
 require 'lib/seeds'
 
+Warning[:deprecated] = false
+
 def assert_queries(expected, event_key = 'sql.active_record')
   sqls = []
   subscriber = ActiveSupport::Notifications.subscribe(event_key) do |_, _, _, _, payload|
