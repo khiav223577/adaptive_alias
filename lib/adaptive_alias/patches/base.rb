@@ -18,29 +18,18 @@ module AdaptiveAlias
         old_column = @old_column
         new_column = @new_column
 
-        @klass.prepend(
-          Module.new do
-            define_method(new_column) do
-              self[new_column]
-            rescue ActiveModel::MissingAttributeError => e
-              raise e if patch.removed
-              patch.remove!
-              retry
-            end
+        AdaptiveAlias.get_or_create_model_module(@klass).instance_exec do
+          remove_method(new_column) if method_defined?(new_column)
+          define_method(new_column) do
+            AdaptiveAlias.rescue_missing_attribute{ self[new_column] }
+          end
 
-            define_method(old_column) do
-              patch.log_warning if log_warning
-
-              begin
-                self[old_column]
-              rescue ActiveModel::MissingAttributeError => e
-                raise e if patch.removed
-                patch.remove!
-                retry
-              end
-            end
-          end,
-        )
+          remove_method(old_column) if method_defined?(old_column)
+          define_method(old_column) do
+            patch.log_warning if log_warning
+            AdaptiveAlias.rescue_missing_attribute{ self[old_column] }
+          end
+        end
 
         expected_error_message = "Mysql2::Error: Unknown column '#{@klass.table_name}.#{current_column}' in 'where clause'".freeze
 
@@ -56,11 +45,10 @@ module AdaptiveAlias
           patch.remove!
 
           if target
-            where_values_hash = target.where_values_hash
-            where_values_hash[alias_column] =
-where_values_hash.delete(current_column) if where_values_hash.key?(current_column)
+            hash = target.where_values_hash
+            hash[alias_column] = hash.delete(current_column) if hash.key?(current_column)
             target.instance_variable_set(:@arel, nil)
-            target.unscope!(:where).where!(where_values_hash)
+            target.unscope!(:where).where!(hash)
           end
 
           next true

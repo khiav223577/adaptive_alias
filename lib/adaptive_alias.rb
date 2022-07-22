@@ -14,6 +14,7 @@ require 'adaptive_alias/hooks/relation'
 module AdaptiveAlias
   @log_interval = 10 * 60
   @current_patches = {}
+  @model_modules ||= {}
 
   class << self
     attr_accessor :unexpected_old_column_proc
@@ -53,6 +54,14 @@ module AdaptiveAlias
     rescue ActiveModel::MissingAttributeError => error
       raise error if not AdaptiveAlias.current_patches.any?{|_key, patch| patch.fix_missing_attribute.call }
       retry
+    end
+
+    def get_or_create_model_module(klass)
+      return @model_modules[klass] if @model_modules[klass]
+
+      @model_modules[klass] = Module.new
+      klass.prepend(@model_modules[klass])
+      return @model_modules[klass]
     end
   end
 end
