@@ -9,6 +9,12 @@ ActiveRecord::Schema.define do
 end
 
 ActiveSupport::Dependencies.autoload_paths << File.expand_path('../models/', __FILE__)
+if Gem::Version.new(ActiveRecord::VERSION::STRING) >= Gem::Version.new('7.0.0')
+  require 'zeitwerk'
+  loader = Zeitwerk::Loader.new
+  ActiveSupport::Dependencies.autoload_paths.each{|s| loader.push_dir(s) }
+  loader.setup # ready!
+end
 
 users = User.create([
   { name: 'Peter', email: 'peter@example.com', gender: 'male' },
