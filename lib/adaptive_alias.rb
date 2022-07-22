@@ -104,6 +104,7 @@ module AdaptiveAlias
     def remove!
       @removed = true
       @klass.send(:reload_schema_from_cache)
+      @klass.initialize_find_by_cache
     end
   end
 
