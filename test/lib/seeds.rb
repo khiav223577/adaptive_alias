@@ -3,6 +3,7 @@ ActiveRecord::Schema.define do
 
   create_table :users, force: true do |t|
     t.string :name
+    t.integer :profile_id
   end
 
   create_table :posts, :force => true do |t|
@@ -16,14 +17,18 @@ ActiveRecord::Schema.define do
     t.string :title
     t.boolean :active
   end
+
+  create_table :profiles, :force => true do |t|
+    t.string :id_number
+  end
 end
 
 require 'rails_compatibility/setup_autoload_paths'
 RailsCompatibility.setup_autoload_paths [File.expand_path('../models/', __FILE__)]
 
 users = User.create([
-  { name: 'Doggy' },
-  { name: 'Catty' },
+  { name: 'Doggy', profile: Profile.new(id_number: 'A1234') },
+  { name: 'Catty', profile: Profile.new(id_number: 'B1234') },
 ])
 
 Post.create([

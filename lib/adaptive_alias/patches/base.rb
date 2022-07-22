@@ -4,6 +4,7 @@ module AdaptiveAlias
   module Patches
     class Base
       attr_reader :fix_association
+      attr_reader :fix_missing_attribute
       attr_reader :removed
 
       def initialize(klass, old_column, new_column)
@@ -45,6 +46,12 @@ module AdaptiveAlias
 
         expected_error_message = "Mysql2::Error: Unknown column '#{@klass.table_name}.#{current_column}' in 'where clause'".freeze
 
+        @fix_missing_attribute = proc do
+          next false if patch.removed
+
+          patch.remove!
+        end
+
         @fix_association = proc do |target, error|
           next false if patch.removed || error.message != expected_error_message
 
@@ -59,20 +66,6 @@ module AdaptiveAlias
 
           next true
         end
-
-        ActiveRecord::Associations::SingularAssociation.prepend(
-          Module.new do
-            define_method(:reader) do
-              begin
-                super()
-              rescue ActiveModel::MissingAttributeError => e
-                raise e if patch.removed
-                patch.remove!
-                retry
-              end
-            end
-          end
-        )
       end
 
       def log_warning
@@ -87,6 +80,7 @@ module AdaptiveAlias
         @klass.send(:reload_schema_from_cache)
         @klass.initialize_find_by_cache
         @fix_association = nil
+        @fix_missing_attribute = nil
       end
     end
   end

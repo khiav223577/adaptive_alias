@@ -1,8 +1,8 @@
 module AdaptiveAlias
   module Hooks
     module Association
-      def find_target
-        AdaptiveAlias.run_with_statement_invalid_rescue(nil){ super }
+      def find_target(*)
+        AdaptiveAlias.rescue_statement_invalid(nil){ super }
       end
     end
   end

@@ -7,6 +7,8 @@ require 'adaptive_alias/patches/back_patch'
 require 'adaptive_alias/patches/forward_patch'
 
 require 'adaptive_alias/hooks/association'
+require 'adaptive_alias/hooks/association_scope'
+require 'adaptive_alias/hooks/singular_association'
 require 'adaptive_alias/hooks/relation'
 
 module AdaptiveAlias
@@ -37,19 +39,22 @@ module AdaptiveAlias
       end
     end
 
-    def run_with_statement_invalid_rescue(relation)
+    def rescue_statement_invalid(relation)
       begin
         yield
       rescue ActiveRecord::StatementInvalid => error
-        AdaptiveAlias.fix_association(relation, error)
+        raise error if not AdaptiveAlias.current_patches.any?{|_key, patch| patch.fix_association.call(relation, error) }
         retry
       end
     end
 
-    def fix_association(relation, error)
-      return if AdaptiveAlias.current_patches.any?{|_key, patch| patch.fix_association.call(relation, error) }
-
-      raise error
+    def rescue_missing_attribute
+      begin
+        yield
+      rescue ActiveModel::MissingAttributeError => error
+        raise error if not AdaptiveAlias.current_patches.any?{|_key, patch| patch.fix_missing_attribute.call }
+        retry
+      end
     end
   end
 end
