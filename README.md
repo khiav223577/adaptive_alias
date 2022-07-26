@@ -8,6 +8,27 @@
 
 Extend attribute_alias and make it be adaptive with realtime database schema.
 
+When we are going to rename a column, we may want to add a forward-patch so that we can use new column name before migration. And after migration, we may want to add a backward-patch so that those where are still using old column name will not be broken.
+Ideally, we switch from forward-patch to backward-patch right after migration:
+```rb
+                   ForwardPatch           migrate            BackwardPatch
+    |----------------------------------------|----------------------------------------|
+    
+``` 
+
+But in reality, it will take times to deploy and restart server to switch patch. There is a gap between migration and restart. So what will happen when db is migrated but server is not restarted?
+We need a way to automatically adjust the patch to adapt current schema.
+
+```rb
+                   ForwardPatch           migrate   restart     BackwardPatch
+    |----------------------------------------|---@-----|-------------------------------| 
+                          
+```
+
+This is what this gem wants to achieve. We don't want to do complex migrations, take care of backward-compatibiliy, and have any downtime.
+Just rely on this gem.
+
+
 ## Supports
 - Ruby 2.6 ~ 2.7, 3.0 ~ 3.1
 - Rails 6.0, 6.1, 7.0
