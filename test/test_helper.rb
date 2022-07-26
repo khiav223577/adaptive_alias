@@ -13,6 +13,7 @@ require 'lib/mysql2_connection'
 require 'lib/seeds'
 
 Warning[:deprecated] = false if Warning.respond_to?(:[]) # Warning#[] is not defined in Ruby 2.6.
+$VERBOSE = nil
 
 def assert_queries(expected, event_key = 'sql.active_record')
   sqls = []
