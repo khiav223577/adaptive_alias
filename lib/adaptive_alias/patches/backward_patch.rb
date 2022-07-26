@@ -4,7 +4,7 @@ require 'adaptive_alias/patches/base'
 
 module AdaptiveAlias
   module Patches
-    class BackPatch < Base
+    class BackwardPatch < Base
       def apply!
         AdaptiveAlias.current_patches[[@klass, @old_column, @new_column]] = self
         @klass.alias_attribute(@old_column, @new_column)

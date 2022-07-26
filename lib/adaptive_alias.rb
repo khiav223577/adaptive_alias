@@ -3,7 +3,7 @@
 require 'adaptive_alias/version'
 require 'adaptive_alias/active_model_patches/read_attribute'
 require 'adaptive_alias/active_model_patches/remove_alias_attribute'
-require 'adaptive_alias/patches/back_patch'
+require 'adaptive_alias/patches/backward_patch'
 require 'adaptive_alias/patches/forward_patch'
 
 require 'adaptive_alias/hooks/association'
@@ -32,7 +32,7 @@ module AdaptiveAlias
 
         included do
           if column_names.include?(new_column)
-            Patches::BackPatch.new(self, old_column, new_column).apply!
+            Patches::BackwardPatch.new(self, old_column, new_column).apply!
           else
             Patches::ForwardPatch.new(self, old_column, new_column).apply!
           end
