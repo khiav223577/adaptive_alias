@@ -198,4 +198,48 @@ class PostsTest < Minitest::Test
       end
     end
   end
+
+  def test_create
+    user = User.find_by(name: 'Catty')
+    post = nil
+
+    assert_queries([
+      "INSERT INTO `posts` (`user_id_old`, `title`) VALUES (2, 'new post')",
+    ]) do
+      post = user.posts.create!(title: 'new post')
+    end
+
+    post.destroy
+    post = nil
+
+    3.times do
+      # --------- do rename migration ---------
+      Post.connection.rename_column :posts, :user_id_old, :user_id
+      user = User.find_by(name: 'Catty')
+      assert_queries([
+        "INSERT INTO `posts` (`user_id_old`, `title`) VALUES (2, 'new post')",
+        "INSERT INTO `posts` (`user_id`, `title`) VALUES (2, 'new post')",
+      ]) do
+        post = user.posts.create!(title: 'new post')
+      end
+
+      post.destroy
+      post = nil
+
+      # --------- rollback rename migration ---------
+      Post.connection.rename_column :posts, :user_id, :user_id_old
+      user = User.find_by(name: 'Catty')
+      assert_queries([
+        "INSERT INTO `posts` (`user_id`, `title`) VALUES (2, 'new post')",
+        "INSERT INTO `posts` (`user_id_old`, `title`) VALUES (2, 'new post')",
+      ]) do
+        post = user.posts.create!(title: 'new post')
+      end
+
+      post.destroy
+      post = nil
+    end
+  ensure
+    post.destroy if post
+  end
 end
