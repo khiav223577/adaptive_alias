@@ -61,5 +61,13 @@ module AdaptiveAlias
       klass.prepend(@model_modules[klass])
       return @model_modules[klass]
     end
+
+    def missing_value?(attributes, klass, name)
+      return false if attributes.key?(name)
+
+      old_name = klass.attribute_aliases.key(name)
+      return false if old_name == nil
+      return !!AdaptiveAlias.current_patches[[klass, old_name.to_sym, name.to_sym]]
+    end
   end
 end
