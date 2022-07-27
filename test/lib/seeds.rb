@@ -21,6 +21,20 @@ ActiveRecord::Schema.define do
   create_table :profiles, force: true do |t|
     t.string :id_number
   end
+
+  create_table :tags, force: true do |t|
+    t.string :name
+    t.integer :taggings_count
+  end
+
+  create_table :taggings, force: true do |t|
+    t.integer :tag_id
+    t.string :taggable_type
+    t.integer :taggable_id
+    t.string :tagger_type
+    t.integer :tagger_id
+    t.string :context
+  end
 end
 
 require 'rails_compatibility/setup_autoload_paths'
@@ -30,6 +44,9 @@ users = User.create([
   { name: 'Doggy', profile: Profile.new(id_number: 'A1234') },
   { name: 'Catty', profile: Profile.new(id_number: 'B1234') },
 ])
+
+users[0].tag_list.add('awesome', 'slick')
+users[0].save
 
 Post.create([
   { title: 'Post A1', user_id_old: users[0].id, active: true },

@@ -9,4 +9,6 @@ class User < ActiveRecord::Base
   has_many :active_articles, ->{ where(active: true) }, class_name: 'Article'
 
   belongs_to :profile
+
+  acts_as_taggable
 end

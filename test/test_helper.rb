@@ -10,6 +10,7 @@ require 'minitest/autorun'
 
 require 'lib/mysql2_connection'
 
+require 'acts-as-taggable-on'
 require 'lib/seeds'
 
 Warning[:deprecated] = false if Warning.respond_to?(:[]) # Warning#[] is not defined in Ruby 2.6.
