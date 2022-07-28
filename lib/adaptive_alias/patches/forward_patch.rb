@@ -14,6 +14,7 @@ module AdaptiveAlias
       def remove!
         super
         @klass.remove_alias_attribute(@new_column)
+        @klass.define_attribute_method(@new_column)
         BackwardPatch.new(@klass, @old_column, @new_column).apply!
       end
     end
