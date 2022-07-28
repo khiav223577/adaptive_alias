@@ -73,20 +73,22 @@ class ProfileTest < Minitest::Test
       assert_equal profile_id, user.profile_id_new
     end
 
-    # --------- do rename migration ---------
-    Article.connection.rename_column :users, :profile_id, :profile_id_new
-    user = User.find_by(name: 'Catty')
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      user = User.find_by(name: 'Catty')
 
-    assert_queries(0) do
-      assert_equal profile_id, user.profile_id_new
-    end
+      assert_queries(0) do
+        assert_equal profile_id, user.profile_id_new
+      end
 
-    # --------- rollback rename migration ---------
-    Article.connection.rename_column :users, :profile_id_new, :profile_id
-    user = User.find_by(name: 'Catty')
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      user = User.find_by(name: 'Catty')
 
-    assert_queries(0) do
-      user.profile_id_new = 1
+      assert_queries(0) do
+        user.profile_id_new = 1
+      end
     end
   end
 end
