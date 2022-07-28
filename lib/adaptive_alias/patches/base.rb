@@ -24,10 +24,21 @@ module AdaptiveAlias
             AdaptiveAlias.rescue_missing_attribute{ self[new_column] }
           end
 
+          remove_method("#{new_column}=") if method_defined?("#{new_column}=")
+          define_method("#{new_column}=") do |*args|
+            AdaptiveAlias.rescue_missing_attribute{ super(*args) }
+          end
+
           remove_method(old_column) if method_defined?(old_column)
           define_method(old_column) do
             patch.log_warning if log_warning
             AdaptiveAlias.rescue_missing_attribute{ self[old_column] }
+          end
+
+          remove_method("#{old_column}=") if method_defined?("#{old_column}=")
+          define_method("#{old_column}=") do |*args|
+            patch.log_warning if log_warning
+            AdaptiveAlias.rescue_missing_attribute{ super(*args) }
           end
         end
 

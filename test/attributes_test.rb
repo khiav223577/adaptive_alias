@@ -11,7 +11,7 @@ class ProfileTest < Minitest::Test
     nil
   end
 
-  def test_access
+  def test_read
     user = User.find_by(name: 'Catty')
     profile_id = user.profile.id
 
@@ -35,6 +35,59 @@ class ProfileTest < Minitest::Test
       assert_queries(0) do
         assert_equal profile_id, user.profile_id_new
         assert_equal profile_id, user.profile_id
+      end
+    end
+  end
+
+  def test_write
+    user = User.find_by(name: 'Catty')
+    assert_queries(0) do
+      user.profile_id = 1
+      user.profile_id_new = 1
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      user = User.find_by(name: 'Catty')
+      assert_queries(0) do
+        user.profile_id = 1
+        user.profile_id_new = 1
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      user = User.find_by(name: 'Catty')
+      assert_queries(0) do
+        user.profile_id = 1
+        user.profile_id_new = 1
+      end
+    end
+  end
+
+  def test_read_write
+    user = User.find_by(name: 'Catty')
+    profile_id = user.profile.id
+
+    assert_queries(0) do
+      assert_equal profile_id, user.profile_id_new
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      user = User.find_by(name: 'Catty')
+
+      assert_queries(0) do
+        assert_equal profile_id, user.profile_id_new
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      user = User.find_by(name: 'Catty')
+
+      assert_queries(0) do
+        user.profile_id_new = 1
       end
     end
   end
