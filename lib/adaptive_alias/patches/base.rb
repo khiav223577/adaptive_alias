@@ -6,6 +6,7 @@ module AdaptiveAlias
       attr_reader :fix_association
       attr_reader :fix_missing_attribute
       attr_reader :removed
+      attr_reader :removable
 
       def initialize(klass, old_column, new_column)
         @klass = klass
@@ -45,6 +46,7 @@ module AdaptiveAlias
         expected_error_message = "Mysql2::Error: Unknown column '#{@klass.table_name}.#{current_column}' in 'where clause'".freeze
 
         @fix_missing_attribute = proc do
+          next false if not patch.removable
           next false if patch.removed
 
           patch.remove!
@@ -52,7 +54,9 @@ module AdaptiveAlias
         end
 
         @fix_association = proc do |target, error|
-          next false if patch.removed || error.message != expected_error_message
+          next false if not patch.removable
+          next false if patch.removed
+          next false if error.message != expected_error_message
 
           patch.remove!
 
@@ -80,6 +84,10 @@ module AdaptiveAlias
         @klass.initialize_find_by_cache
         @fix_association = nil
         @fix_missing_attribute = nil
+      end
+
+      def mark_removable
+        @removable = true
       end
     end
   end

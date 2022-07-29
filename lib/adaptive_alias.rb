@@ -31,27 +31,31 @@ module AdaptiveAlias
         extend ActiveSupport::Concern
 
         included do
-          if column_names.include?(new_column)
-            Patches::BackwardPatch.new(self, old_column, new_column).apply!
-          else
-            Patches::ForwardPatch.new(self, old_column, new_column).apply!
-          end
+          patch = (column_names.include?(new_column) ? Patches::BackwardPatch : Patches::ForwardPatch).new(self, old_column, new_column)
+          patch.apply!
+          patch.mark_removable
         end
       end
     end
 
-    def rescue_statement_invalid(relation)
+    def rescue_statement_invalid(relation, &block)
       yield
     rescue ActiveRecord::StatementInvalid => error
       raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_association.call(relation, error) }
-      retry
+
+      result = rescue_statement_invalid(relation, &block)
+      AdaptiveAlias.current_patches.each_value(&:mark_removable)
+      return result
     end
 
-    def rescue_missing_attribute
+    def rescue_missing_attribute(&block)
       yield
     rescue ActiveModel::MissingAttributeError => error
       raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_missing_attribute.call }
-      retry
+
+      result = rescue_missing_attribute(&block)
+      AdaptiveAlias.current_patches.each_value(&:mark_removable)
+      return result
     end
 
     def get_or_create_model_module(klass)
