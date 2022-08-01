@@ -80,7 +80,7 @@ module AdaptiveAlias
       end
 
       def log_warning
-        if @prev_warning_time == nil || @prev_warning_time < AdaptiveAlias.log_interval.ago
+        if @prev_warning_time == nil || @prev_warning_time < Time.now - AdaptiveAlias.log_interval
           @prev_warning_time = Time.now
           AdaptiveAlias.unexpected_old_column_proc&.call
         end
