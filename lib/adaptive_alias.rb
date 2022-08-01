@@ -48,12 +48,12 @@ module AdaptiveAlias
       return result
     end
 
-    def rescue_missing_attribute(&block)
+    def rescue_missing_attribute(klass, &block)
       yield
     rescue ActiveModel::MissingAttributeError => error
-      raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_missing_attribute.call }
+      raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_missing_attribute.call(klass) }
 
-      result = rescue_missing_attribute(&block)
+      result = rescue_missing_attribute(klass, &block)
       AdaptiveAlias.current_patches.each_value(&:mark_removable)
       return result
     end
