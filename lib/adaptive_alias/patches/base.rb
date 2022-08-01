@@ -89,6 +89,7 @@ module AdaptiveAlias
       def remove!
         @removed = true
         @klass.reset_column_information
+        @klass.columns_hash
         @fix_association = nil
         @fix_missing_attribute = nil
       end
