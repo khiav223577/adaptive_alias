@@ -4,6 +4,10 @@ module AdaptiveAlias
       def find_target(*)
         AdaptiveAlias.rescue_statement_invalid(nil){ super }
       end
+
+      def create!(attributes = {}, &block)
+        AdaptiveAlias.rescue_statement_invalid(association_scope){ super }
+      end
     end
   end
 end

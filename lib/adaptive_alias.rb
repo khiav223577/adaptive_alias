@@ -2,6 +2,7 @@
 
 require 'adaptive_alias/version'
 require 'adaptive_alias/active_model_patches/read_attribute'
+require 'adaptive_alias/active_model_patches/write_attribute'
 require 'adaptive_alias/active_model_patches/remove_alias_attribute'
 require 'adaptive_alias/patches/backward_patch'
 require 'adaptive_alias/patches/forward_patch'
@@ -48,12 +49,12 @@ module AdaptiveAlias
       return result
     end
 
-    def rescue_missing_attribute(&block)
+    def rescue_missing_attribute(klass, &block)
       yield
     rescue ActiveModel::MissingAttributeError => error
-      raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_missing_attribute.call }
+      raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_missing_attribute.call(klass, error) }
 
-      result = rescue_missing_attribute(&block)
+      result = rescue_missing_attribute(klass, &block)
       AdaptiveAlias.current_patches.each_value(&:mark_removable)
       return result
     end

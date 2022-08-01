@@ -120,7 +120,7 @@ class PostsTest < Minitest::Test
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `posts`.* FROM `posts` WHERE `posts`.`user_id_old` = #{user.id} AND `posts`.`active` = TRUE",
-        "SELECT `posts`.* FROM `posts` WHERE `posts`.`user_id` = #{user.id} AND `posts`.`active` = TRUE",
+        "SELECT `posts`.* FROM `posts` WHERE `posts`.`active` = TRUE AND `posts`.`user_id` = #{user.id}",
       ]) do
         assert_equal ['Post B2'], user.active_posts.map(&:title)
       end
@@ -130,7 +130,7 @@ class PostsTest < Minitest::Test
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `posts`.* FROM `posts` WHERE `posts`.`user_id` = #{user.id} AND `posts`.`active` = TRUE",
-        "SELECT `posts`.* FROM `posts` WHERE `posts`.`user_id_old` = #{user.id} AND `posts`.`active` = TRUE",
+        "SELECT `posts`.* FROM `posts` WHERE `posts`.`active` = TRUE AND `posts`.`user_id_old` = #{user.id}",
       ]) do
         assert_equal ['Post B2'], user.active_posts.map(&:title)
       end
@@ -182,7 +182,7 @@ class PostsTest < Minitest::Test
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `posts`.`title` FROM `posts` WHERE `posts`.`user_id_old` = #{user.id} AND `posts`.`active` = TRUE",
-        "SELECT `posts`.`title` FROM `posts` WHERE `posts`.`user_id` = #{user.id} AND `posts`.`active` = TRUE",
+        "SELECT `posts`.`title` FROM `posts` WHERE `posts`.`active` = TRUE AND `posts`.`user_id` = #{user.id}",
       ]) do
         assert_equal ['Post B2'], user.posts.where(active: true).pluck(:title)
       end
@@ -192,10 +192,56 @@ class PostsTest < Minitest::Test
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `posts`.`title` FROM `posts` WHERE `posts`.`user_id` = #{user.id} AND `posts`.`active` = TRUE",
-        "SELECT `posts`.`title` FROM `posts` WHERE `posts`.`user_id_old` = #{user.id} AND `posts`.`active` = TRUE",
+        "SELECT `posts`.`title` FROM `posts` WHERE `posts`.`active` = TRUE AND `posts`.`user_id_old` = #{user.id}",
       ]) do
         assert_equal ['Post B2'], user.posts.where(active: true).pluck(:title)
       end
     end
+  end
+
+  def test_create
+    user = User.find_by(name: 'Catty')
+    post = nil
+
+    assert_queries([
+      "INSERT INTO `posts` (`user_id_old`, `title`) VALUES (2, 'new post')",
+    ]) do
+      post = user.posts.create!(title: 'new post')
+    end
+
+    post.destroy
+    post = nil
+
+    3.times do
+      # --------- do rename migration ---------
+      Post.connection.rename_column :posts, :user_id_old, :user_id
+      user = User.find_by(name: 'Catty')
+      assert_queries([
+        "INSERT INTO `posts` (`user_id_old`, `title`) VALUES (2, 'new post')",
+        'ROLLBACK',
+        "INSERT INTO `posts` (`user_id`, `title`) VALUES (2, 'new post')",
+      ]) do
+        post = user.posts.create!(title: 'new post')
+      end
+
+      post.destroy
+      post = nil
+
+      # --------- rollback rename migration ---------
+      Post.connection.rename_column :posts, :user_id, :user_id_old
+      user = User.find_by(name: 'Catty')
+      assert_queries([
+        "INSERT INTO `posts` (`user_id`, `title`) VALUES (2, 'new post')",
+        'ROLLBACK',
+        "INSERT INTO `posts` (`user_id_old`, `title`) VALUES (2, 'new post')",
+      ]) do
+        post = user.posts.create!(title: 'new post')
+      end
+
+      post.destroy
+      post = nil
+    end
+  ensure
+    post.destroy if post
   end
 end

@@ -120,7 +120,7 @@ class ArticlesTest < Minitest::Test
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id} AND `articles`.`active` = TRUE",
-        "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id_abc` = #{user.id} AND `articles`.`active` = TRUE",
+        "SELECT `articles`.* FROM `articles` WHERE `articles`.`active` = TRUE AND `articles`.`user_id_abc` = #{user.id}",
       ]) do
         assert_equal ['Article B2'], user.active_articles.map(&:title)
       end
@@ -130,7 +130,7 @@ class ArticlesTest < Minitest::Test
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id_abc` = #{user.id} AND `articles`.`active` = TRUE",
-        "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id} AND `articles`.`active` = TRUE",
+        "SELECT `articles`.* FROM `articles` WHERE `articles`.`active` = TRUE AND `articles`.`user_id` = #{user.id}",
       ]) do
         assert_equal ['Article B2'], user.active_articles.map(&:title)
       end
@@ -182,7 +182,7 @@ class ArticlesTest < Minitest::Test
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id` = #{user.id} AND `articles`.`active` = TRUE",
-        "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id_abc` = #{user.id} AND `articles`.`active` = TRUE",
+        "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`active` = TRUE AND `articles`.`user_id_abc` = #{user.id}",
       ]) do
         assert_equal ['Article B2'], user.articles.where(active: true).pluck(:title)
       end
@@ -192,10 +192,56 @@ class ArticlesTest < Minitest::Test
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id_abc` = #{user.id} AND `articles`.`active` = TRUE",
-        "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id` = #{user.id} AND `articles`.`active` = TRUE",
+        "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`active` = TRUE AND `articles`.`user_id` = #{user.id}",
       ]) do
         assert_equal ['Article B2'], user.articles.where(active: true).pluck(:title)
       end
     end
+  end
+
+  def test_create
+    user = User.find_by(name: 'Catty')
+    article = nil
+
+    assert_queries([
+      "INSERT INTO `articles` (`user_id`, `title`) VALUES (2, 'new article')",
+    ]) do
+      article = user.articles.create!(title: 'new article')
+    end
+
+    article.destroy
+    article = nil
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :articles, :user_id, :user_id_abc
+      user = User.find_by(name: 'Catty')
+      assert_queries([
+        "INSERT INTO `articles` (`user_id`, `title`) VALUES (2, 'new article')",
+        'ROLLBACK',
+        "INSERT INTO `articles` (`user_id_abc`, `title`) VALUES (2, 'new article')",
+      ]) do
+        article = user.articles.create!(title: 'new article')
+      end
+
+      article.destroy
+      article = nil
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :articles, :user_id_abc, :user_id
+      user = User.find_by(name: 'Catty')
+      assert_queries([
+        "INSERT INTO `articles` (`user_id_abc`, `title`) VALUES (2, 'new article')",
+        'ROLLBACK',
+        "INSERT INTO `articles` (`user_id`, `title`) VALUES (2, 'new article')",
+      ]) do
+        article = user.articles.create!(title: 'new article')
+      end
+
+      article.destroy
+      article = nil
+    end
+  ensure
+    article.destroy if article
   end
 end
