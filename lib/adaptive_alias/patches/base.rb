@@ -44,12 +44,17 @@ module AdaptiveAlias
           end
         end
 
-        expected_error_message = "Mysql2::Error: Unknown column '#{klass.table_name}.#{current_column}' in 'where clause'".freeze
+        expected_error_message1 = "Mysql2::Error: Unknown column '#{klass.table_name}.#{current_column}' in 'where clause'".freeze
+        expected_error_message2 = "Mysql2::Error: Unknown column '#{current_column}' in 'field list'".freeze
+        expected_error_message3 = "can't write unknown attribute `#{current_column}`".freeze
+        expected_error_message4 = "missing attribute: #{current_column}".freeze
+        expected_error_message5 = 'missing attribute: '.freeze
 
-        @fix_missing_attribute = proc do |error_klass|
+        @fix_missing_attribute = proc do |error_klass, error|
           next false if not patch.removable
           next false if patch.removed
           next false if klass != error_klass
+          next false if error.message != expected_error_message3 and error.message != expected_error_message4 and error.message != expected_error_message5
 
           patch.remove!
           next true
@@ -58,13 +63,14 @@ module AdaptiveAlias
         @fix_association = proc do |target, error|
           next false if not patch.removable
           next false if patch.removed
-          next false if error.message != expected_error_message
+          next false if error.message != expected_error_message1 and error.message != expected_error_message2
 
           patch.remove!
 
           if target
             hash = target.where_values_hash
             hash[alias_column] = hash.delete(current_column) if hash.key?(current_column)
+            hash[alias_column.to_s] = hash.delete(current_column.to_s) if hash.key?(current_column.to_s)
             target.instance_variable_set(:@arel, nil)
             target.unscope!(:where).where!(hash)
           end
@@ -82,8 +88,7 @@ module AdaptiveAlias
 
       def remove!
         @removed = true
-        @klass.send(:reload_schema_from_cache)
-        @klass.initialize_find_by_cache
+        @klass.reset_column_information
         @fix_association = nil
         @fix_missing_attribute = nil
       end

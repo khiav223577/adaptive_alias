@@ -19,7 +19,7 @@ $VERBOSE = nil
 def assert_queries(expected, event_key = 'sql.active_record')
   sqls = []
   subscriber = ActiveSupport::Notifications.subscribe(event_key) do |_, _, _, _, payload|
-    sqls << "#{payload[:sql]}" if payload[:sql] !~ /\A(?:BEGIN TRANSACTION|COMMIT TRANSACTION|BEGIN|COMMIT)\z/i
+    sqls << "#{payload[:sql]}" if payload[:sql] !~ /\A(?:BEGIN TRANSACTION|COMMIT TRANSACTION|BEGIN|COMMIT)\z|FROM information_schema\.tables|SHOW FULL FIELDS/i
   end
 
   yield
