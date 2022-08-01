@@ -16,7 +16,7 @@ module ActiveRecord::AttributeMethods::Read
     name = self.class.attribute_aliases[name] || name
 
     sync_with_transaction_state if @transaction_state&.finalized?
-    return yield if block_given? and AdaptiveAlias.missing_value?(@attributes, self.class, name)
+    return yield(name) if block_given? and AdaptiveAlias.missing_value?(@attributes, self.class, name)
     return @attributes.fetch_value(name, &block)
   end
 end

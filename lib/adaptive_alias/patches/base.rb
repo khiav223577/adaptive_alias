@@ -44,17 +44,21 @@ module AdaptiveAlias
           end
         end
 
-        expected_error_message1 = "Mysql2::Error: Unknown column '#{klass.table_name}.#{current_column}' in 'where clause'".freeze
-        expected_error_message2 = "Mysql2::Error: Unknown column '#{current_column}' in 'field list'".freeze
-        expected_error_message3 = "can't write unknown attribute `#{current_column}`".freeze
-        expected_error_message4 = "missing attribute: #{current_column}".freeze
-        expected_error_message5 = 'missing attribute: '.freeze
+        expected_association_err_msgs = [
+          "Mysql2::Error: Unknown column '#{klass.table_name}.#{current_column}' in 'where clause'".freeze,
+          "Mysql2::Error: Unknown column '#{current_column}' in 'field list'".freeze,
+        ].freeze
+
+        expected_attribute_err_msgs = [
+          "can't write unknown attribute `#{current_column}`".freeze,
+          "missing attribute: #{current_column}".freeze,
+        ].freeze
 
         @fix_missing_attribute = proc do |error_klass, error|
           next false if not patch.removable
           next false if patch.removed
           next false if klass != error_klass
-          next false if error.message != expected_error_message3 and error.message != expected_error_message4 and error.message != expected_error_message5
+          next false if not expected_attribute_err_msgs.include?(error.message)
 
           patch.remove!
           next true
@@ -63,7 +67,7 @@ module AdaptiveAlias
         @fix_association = proc do |target, error|
           next false if not patch.removable
           next false if patch.removed
-          next false if error.message != expected_error_message1 and error.message != expected_error_message2
+          next false if not expected_association_err_msgs.include?(error.message)
 
           patch.remove!
 
