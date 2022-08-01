@@ -2,6 +2,7 @@
 
 require 'adaptive_alias/version'
 require 'adaptive_alias/active_model_patches/read_attribute'
+require 'adaptive_alias/active_model_patches/write_attribute'
 require 'adaptive_alias/active_model_patches/remove_alias_attribute'
 require 'adaptive_alias/patches/backward_patch'
 require 'adaptive_alias/patches/forward_patch'
