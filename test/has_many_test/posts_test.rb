@@ -244,4 +244,36 @@ class PostsTest < Minitest::Test
   ensure
     post.destroy if post
   end
+
+  def test_destroy
+    user = User.find_by(name: 'Catty')
+    posts = Array.new(7){ user.posts.create!(title: 'new post') }
+
+    assert_queries([
+      "DELETE FROM `posts` WHERE `posts`.`id` = #{posts.last.id}",
+    ]) do
+      posts.pop.destroy!
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Post.connection.rename_column :posts, :user_id_old, :user_id
+      assert_queries([
+        "DELETE FROM `posts` WHERE `posts`.`id` = #{posts.last.id}",
+      ]) do
+        posts.pop.destroy!
+      end
+
+      # --------- rollback rename migration ---------
+      Post.connection.rename_column :posts, :user_id, :user_id_old
+      assert_queries([
+        "DELETE FROM `posts` WHERE `posts`.`id` = #{posts.last.id}",
+      ]) do
+        posts.pop.destroy!
+      end
+    end
+  ensure
+    posts.each(&:destroy!)
+    posts.clear
+  end
 end
