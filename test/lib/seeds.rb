@@ -35,6 +35,11 @@ ActiveRecord::Schema.define do
     t.integer :tagger_id
     t.string :context
   end
+
+  create_table :reviews, force: true do |t|
+    t.text :content
+    t.belongs_to :reviewable, :polymorphic => true
+  end
 end
 
 require 'rails_compatibility/setup_autoload_paths'
@@ -48,16 +53,26 @@ users = User.create([
 users[0].tag_list.add('awesome', 'slick')
 users[0].save
 
-Post.create([
+posts = Post.create([
   { title: 'Post A1', user_id_old: users[0].id, active: true },
   { title: 'Post B1', user_id_old: users[1].id, active: false },
   { title: 'Post B2', user_id_old: users[1].id, active: true },
   { title: 'Post B3', user_id_old: users[1].id, active: false },
 ])
 
-Article.create([
+posts[0].reviews.create!(content: 'post review A1')
+posts[1].reviews.create!(content: 'post review B1')
+posts[1].reviews.create!(content: 'post review B2')
+posts[2].reviews.create!(content: 'post review C1')
+
+articles = Article.create([
   { title: 'Article A1', user_id: users[0].id, active: true },
   { title: 'Article B1', user_id: users[1].id, active: false },
   { title: 'Article B2', user_id: users[1].id, active: true },
   { title: 'Article B3', user_id: users[1].id, active: false },
 ])
+
+articles[0].reviews.create!(content: 'article review A1')
+articles[1].reviews.create!(content: 'article review B1')
+articles[1].reviews.create!(content: 'article review B2')
+articles[2].reviews.create!(content: 'article review C1')
