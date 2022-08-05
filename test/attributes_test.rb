@@ -5,10 +5,7 @@ class ProfileTest < Minitest::Test
   end
 
   def teardown
-    # make suer to rollback db schema even if some test cases fail
-    Article.connection.rename_column :users, :profile_id_new, :profile_id
-  rescue
-    nil
+    restore_original_db_schema!(User, :profile_id, :profile_id_new)
   end
 
   def test_read

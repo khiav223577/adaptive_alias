@@ -37,3 +37,14 @@ def assert_queries(expected, event_key = 'sql.active_record')
 ensure
   ActiveSupport::Notifications.unsubscribe(subscriber)
 end
+
+# make suer to rollback db schema even if some test cases fail
+def restore_original_db_schema!(klass, old_column, new_column)
+  begin
+    klass.connection.rename_column klass.table_name, new_column, old_column
+  rescue
+  end
+
+  patch = AdaptiveAlias.current_patches[[klass, old_column, new_column]]
+  patch.remove!.mark_removable if patch.is_a?(AdaptiveAlias::Patches::BackwardPatch)
+end
