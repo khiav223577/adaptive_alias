@@ -3,4 +3,5 @@ class Article < ActiveRecord::Base
   include AdaptiveAlias[:user_id, :user_id_abc]
 
   belongs_to :user
+  has_many :reviews, as: :reviewable
 end

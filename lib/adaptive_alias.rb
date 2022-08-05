@@ -4,6 +4,7 @@ require 'adaptive_alias/version'
 require 'adaptive_alias/active_model_patches/read_attribute'
 require 'adaptive_alias/active_model_patches/write_attribute'
 require 'adaptive_alias/active_model_patches/remove_alias_attribute'
+require 'adaptive_alias/active_model_patches/apply_scope'
 require 'adaptive_alias/patches/backward_patch'
 require 'adaptive_alias/patches/forward_patch'
 
@@ -39,12 +40,12 @@ module AdaptiveAlias
       end
     end
 
-    def rescue_statement_invalid(relation, &block)
+    def rescue_statement_invalid(relation, reflection, &block)
       yield
     rescue ActiveRecord::StatementInvalid => error
-      raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_association.call(relation, error) }
+      raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_association.call(relation, reflection, error) }
 
-      result = rescue_statement_invalid(relation, &block)
+      result = rescue_statement_invalid(relation, reflection, &block)
       AdaptiveAlias.current_patches.each_value(&:mark_removable)
       return result
     end

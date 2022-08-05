@@ -64,15 +64,15 @@ module AdaptiveAlias
           next true
         end
 
-        @fix_association = proc do |target, error|
+        @fix_association = proc do |relation, reflection, error|
           next false if not patch.removable
           next false if patch.removed
           next false if not expected_association_err_msgs.include?(error.message)
 
           patch.remove!
 
-          if target
-            target.where_clause.send(:predicates).each do |node|
+          if relation
+            relation.where_clause.send(:predicates).each do |node|
               next if node.left.name != current_column.to_s
               next if klass.table_name != node.left.relation.name
 
@@ -80,6 +80,8 @@ module AdaptiveAlias
               node.left.name = alias_column.to_s
             end
           end
+
+          reflection.clear_association_scope_cache if reflection
 
           next true
         end
