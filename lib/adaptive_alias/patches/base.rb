@@ -72,11 +72,13 @@ module AdaptiveAlias
           patch.remove!
 
           if target
-            hash = target.where_values_hash
-            hash[alias_column] = hash.delete(current_column) if hash.key?(current_column)
-            hash[alias_column.to_s] = hash.delete(current_column.to_s) if hash.key?(current_column.to_s)
-            target.instance_variable_set(:@arel, nil)
-            target.unscope!(:where).where!(hash)
+            target.where_clause.send(:predicates).each do |node|
+              next if node.left.name != current_column.to_s
+              next if klass.table_name != node.left.relation.name
+
+              node.left = node.left.clone
+              node.left.name = alias_column.to_s
+            end
           end
 
           next true
