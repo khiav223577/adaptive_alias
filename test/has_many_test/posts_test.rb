@@ -5,10 +5,7 @@ class PostsTest < Minitest::Test
   end
 
   def teardown
-    # make suer to rollback db schema even if some test cases fail
-    Post.connection.rename_column :posts, :user_id, :user_id_old
-  rescue
-    nil
+    restore_original_db_schema!(Post, :user_id_old, :user_id)
   end
 
   def test_first

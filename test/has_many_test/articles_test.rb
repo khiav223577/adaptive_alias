@@ -5,10 +5,7 @@ class ArticlesTest < Minitest::Test
   end
 
   def teardown
-    # make suer to rollback db schema even if some test cases fail
-    Article.connection.rename_column :articles, :user_id_abc, :user_id
-  rescue
-    nil
+    restore_original_db_schema!(Article, :user_id, :user_id_abc)
   end
 
   def test_first
