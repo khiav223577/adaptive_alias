@@ -70,6 +70,68 @@ class ArticlesReviewsTest < Minitest::Test
     end
   end
 
+  def test_to_a
+    user = User.find_by(name: 'Catty')
+    assert_queries([
+      "SELECT `reviews`.* FROM `reviews` INNER JOIN `articles` ON `reviews`.`reviewable_id` = `articles`.`id` WHERE `articles`.`user_id` = #{user.id} AND `reviews`.`reviewable_type` = 'Article'",
+    ]) do
+      assert_equal ['article review B1', 'article review B2', 'article review C1'], user.articles_reviews.map(&:content)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :articles, :user_id, :user_id_abc
+      user = User.find_by(name: 'Catty')
+      assert_queries([
+        "SELECT `reviews`.* FROM `reviews` INNER JOIN `articles` ON `reviews`.`reviewable_id` = `articles`.`id` WHERE `articles`.`user_id` = #{user.id} AND `reviews`.`reviewable_type` = 'Article'",
+        "SELECT `reviews`.* FROM `reviews` INNER JOIN `articles` ON `reviews`.`reviewable_id` = `articles`.`id` WHERE `articles`.`user_id_abc` = #{user.id} AND `reviews`.`reviewable_type` = 'Article'",
+      ]) do
+        assert_equal ['article review B1', 'article review B2', 'article review C1'], user.articles_reviews.map(&:content)
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :articles, :user_id_abc, :user_id
+      user = User.find_by(name: 'Catty')
+      assert_queries([
+        "SELECT `reviews`.* FROM `reviews` INNER JOIN `articles` ON `reviews`.`reviewable_id` = `articles`.`id` WHERE `articles`.`user_id_abc` = #{user.id} AND `reviews`.`reviewable_type` = 'Article'",
+        "SELECT `reviews`.* FROM `reviews` INNER JOIN `articles` ON `reviews`.`reviewable_id` = `articles`.`id` WHERE `articles`.`user_id` = #{user.id} AND `reviews`.`reviewable_type` = 'Article'",
+      ]) do
+        assert_equal ['article review B1', 'article review B2', 'article review C1'], user.articles_reviews.map(&:content)
+      end
+    end
+  end
+
+  def test_to_a_with_default_scope
+    user = User.find_by(name: 'Catty')
+    assert_queries([
+      "SELECT `reviews`.* FROM `reviews` INNER JOIN `articles` ON `reviews`.`reviewable_id` = `articles`.`id` WHERE `articles`.`user_id` = #{user.id} AND `reviews`.`reviewable_type` = 'Article' AND `articles`.`active` = TRUE",
+    ]) do
+      assert_equal ['article review C1'], user.active_articles_reviews.map(&:content)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :articles, :user_id, :user_id_abc
+      user = User.find_by(name: 'Catty')
+      assert_queries([
+        "SELECT `reviews`.* FROM `reviews` INNER JOIN `articles` ON `reviews`.`reviewable_id` = `articles`.`id` WHERE `articles`.`user_id` = #{user.id} AND `reviews`.`reviewable_type` = 'Article' AND `articles`.`active` = TRUE",
+        "SELECT `reviews`.* FROM `reviews` INNER JOIN `articles` ON `reviews`.`reviewable_id` = `articles`.`id` WHERE `articles`.`user_id_abc` = #{user.id} AND `reviews`.`reviewable_type` = 'Article' AND `articles`.`active` = TRUE",
+      ]) do
+        assert_equal ['article review C1'], user.active_articles_reviews.map(&:content)
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :articles, :user_id_abc, :user_id
+      user = User.find_by(name: 'Catty')
+      assert_queries([
+        "SELECT `reviews`.* FROM `reviews` INNER JOIN `articles` ON `reviews`.`reviewable_id` = `articles`.`id` WHERE `articles`.`user_id_abc` = #{user.id} AND `reviews`.`reviewable_type` = 'Article' AND `articles`.`active` = TRUE",
+        "SELECT `reviews`.* FROM `reviews` INNER JOIN `articles` ON `reviews`.`reviewable_id` = `articles`.`id` WHERE `articles`.`user_id` = #{user.id} AND `reviews`.`reviewable_type` = 'Article' AND `articles`.`active` = TRUE",
+      ]) do
+        assert_equal ['article review C1'], user.active_articles_reviews.map(&:content)
+      end
+    end
+  end
+
   def test_pluck
     user = User.find_by(name: 'Catty')
     assert_queries([
