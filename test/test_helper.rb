@@ -40,12 +40,15 @@ ensure
 end
 
 # make suer to rollback db schema even if some test cases fail
-def restore_original_db_schema!(klass, old_column, new_column)
+def restore_original_db_schema!(klass, old_column, new_column, forward = true)
   begin
     klass.connection.rename_column klass.table_name, new_column, old_column
   rescue
   end
 
-  patch = AdaptiveAlias.current_patches[[klass, old_column, new_column]]
-  patch.remove!.mark_removable if patch.is_a?(AdaptiveAlias::Patches::BackwardPatch)
+  key = forward ? [klass, old_column, new_column] : [klass, new_column, old_column]
+  patch = AdaptiveAlias.current_patches[key]
+
+  expected_patch_klass = forward ? AdaptiveAlias::Patches::ForwardPatch : AdaptiveAlias::Patches::BackwardPatch
+  patch.remove!.mark_removable if not patch.is_a?(expected_patch_klass)
 end
