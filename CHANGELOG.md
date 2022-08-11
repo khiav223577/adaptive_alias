@@ -1,5 +1,8 @@
 ## Change Log
 
+### [v0.2.2](https://github.com/khiav223577/adaptive_alias/compare/v0.2.1...v0.2.2) 2022/08/11
+- [#14](https://github.com/khiav223577/adaptive_alias/pull/14) [Fix] Fail to use backward-patch when target column has already been migrated (@khiav223577)
+
 ### [v0.2.1](https://github.com/khiav223577/adaptive_alias/compare/v0.2.0...v0.2.1) 2022/08/11
 - [#13](https://github.com/khiav223577/adaptive_alias/pull/13) [Fix] Nested module include is not supported until ruby 3.0 (@khiav223577)
 - [#12](https://github.com/khiav223577/adaptive_alias/pull/12) [Test] Add test cases to test column_names (@khiav223577)
