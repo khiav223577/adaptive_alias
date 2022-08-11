@@ -12,6 +12,11 @@ class User < ActiveRecord::Base
   has_many :articles_reviews, through: :articles, source: :reviews, class_name: 'Review'
   has_many :active_articles_reviews, through: :active_articles, source: :reviews, class_name: 'Review'
 
+  has_many :papers
+  has_many :active_papers, ->{ where(active: true) }, class_name: 'Paper'
+  has_many :papers_reviews, through: :papers, source: :reviews, class_name: 'Review'
+  has_many :active_papers_reviews, through: :active_papers, source: :reviews, class_name: 'Review'
+
   belongs_to :profile
 
   acts_as_taggable
