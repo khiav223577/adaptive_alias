@@ -1,5 +1,9 @@
 ## Change Log
 
+### [v0.2.1](https://github.com/khiav223577/adaptive_alias/compare/v0.2.0...v0.2.1) 2022/08/11
+- [#13](https://github.com/khiav223577/adaptive_alias/pull/13) [Fix] Nested module include is not supported until ruby 3.0 (@khiav223577)
+- [#12](https://github.com/khiav223577/adaptive_alias/pull/12) [Test] Add test cases to test column_names (@khiav223577)
+
 ### [v0.2.0](https://github.com/khiav223577/adaptive_alias/compare/v0.1.0...v0.2.0) 2022/08/05
 - [#11](https://github.com/khiav223577/adaptive_alias/pull/11) [Feature] Support polymorphic (@khiav223577)
 - [#10](https://github.com/khiav223577/adaptive_alias/pull/10) [Enhance] Prevent adding methods directly in class / module (@khiav223577)
