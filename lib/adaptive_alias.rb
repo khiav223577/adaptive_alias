@@ -33,7 +33,7 @@ module AdaptiveAlias
         extend ActiveSupport::Concern
 
         included do
-          patch = (column_names.include?(new_column) ? Patches::BackwardPatch : Patches::ForwardPatch).new(self, old_column, new_column)
+          patch = (column_names.include?(new_column.to_s) ? Patches::BackwardPatch : Patches::ForwardPatch).new(self, old_column, new_column)
           patch.apply!
           patch.mark_removable
         end
