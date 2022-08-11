@@ -38,7 +38,7 @@ ActiveRecord::Schema.define do
 
   create_table :reviews, force: true do |t|
     t.text :content
-    t.belongs_to :reviewable, :polymorphic => true
+    t.belongs_to :reviewable, polymorphic: true
   end
 end
 
