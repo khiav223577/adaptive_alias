@@ -39,8 +39,8 @@ class ProfileTest < Minitest::Test
   def test_write
     user = User.find_by(name: 'Catty')
     assert_queries(0) do
-      user.profile_id = 1
-      user.profile_id_new = 1
+      user.profile_id = 123
+      user.profile_id_new = 123
     end
 
     3.times do
@@ -48,16 +48,20 @@ class ProfileTest < Minitest::Test
       Article.connection.rename_column :users, :profile_id, :profile_id_new
       user = User.find_by(name: 'Catty')
       assert_queries(0) do
-        user.profile_id = 1
-        user.profile_id_new = 1
+        user.profile_id = 123
+        user.profile_id_new = 123
+        assert_equal 123, user.profile_id
+        assert_equal 123, user.profile_id_new
       end
 
       # --------- rollback rename migration ---------
       Article.connection.rename_column :users, :profile_id_new, :profile_id
       user = User.find_by(name: 'Catty')
       assert_queries(0) do
-        user.profile_id = 1
-        user.profile_id_new = 1
+        user.profile_id = 123
+        user.profile_id_new = 123
+        assert_equal 123, user.profile_id
+        assert_equal 123, user.profile_id_new
       end
     end
   end
@@ -84,7 +88,8 @@ class ProfileTest < Minitest::Test
       user = User.find_by(name: 'Catty')
 
       assert_queries(0) do
-        user.profile_id_new = 1
+        user.profile_id_new = 123
+        assert_equal 123, user.profile_id_new
       end
     end
   end

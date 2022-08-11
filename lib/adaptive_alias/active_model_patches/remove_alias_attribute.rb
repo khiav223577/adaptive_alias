@@ -19,6 +19,13 @@ module AdaptiveAlias
   end
 end
 
-module ActiveModel::AttributeMethods::ClassMethods
-  include AdaptiveAlias::ActiveModelPatches::RemoveAliasAttribute
+# Nested module include is not supported until ruby 3.0
+if Gem::Version.new(RUBY_VERSION) < Gem::Version.new('3')
+  AdaptiveAlias::ActiveModelPatches::RemoveAliasAttribute.instance_methods.each do |method|
+    ActiveModel::AttributeMethods::ClassMethods.define_method(method, AdaptiveAlias::ActiveModelPatches::RemoveAliasAttribute.instance_method(method))
+  end
+else
+  module ActiveModel::AttributeMethods::ClassMethods
+    include AdaptiveAlias::ActiveModelPatches::RemoveAliasAttribute
+  end
 end
