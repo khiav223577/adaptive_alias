@@ -46,6 +46,9 @@ module AdaptiveAlias
 
         expected_association_err_msgs = [
           "Mysql2::Error: Unknown column '#{klass.table_name}.#{current_column}' in 'where clause'".freeze,
+        ].freeze
+
+        expected_ambiguous_association_err_msgs = [
           "Mysql2::Error: Unknown column '#{current_column}' in 'field list'".freeze,
         ].freeze
 
@@ -67,7 +70,15 @@ module AdaptiveAlias
         @fix_association = proc do |relation, reflection, error|
           next false if not patch.removable
           next false if patch.removed
-          next false if not expected_association_err_msgs.include?(error.message)
+
+          ambiguous = expected_ambiguous_association_err_msgs.include?(error.message)
+
+          if ambiguous
+            next false if relation and klass != relation.klass
+            next false if reflection and klass != reflection.klass
+          end
+
+          next false if not expected_association_err_msgs.include?(error.message) and not ambiguous
 
           patch.remove!
 
