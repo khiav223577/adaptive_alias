@@ -25,6 +25,7 @@ module AdaptiveAlias
   end
 end
 
-module ActiveRecord::AttributeMethods::Read
+# Nested module include is not supported until ruby 3.0
+class ActiveRecord::Base
   prepend AdaptiveAlias::ActiveModelPatches::ReadAttribute
 end

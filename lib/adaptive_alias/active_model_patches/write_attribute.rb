@@ -20,6 +20,6 @@ module AdaptiveAlias
   end
 end
 
-module ActiveRecord::AttributeMethods::Write
+class ActiveRecord::Base
   prepend AdaptiveAlias::ActiveModelPatches::WriteAttribute
 end
