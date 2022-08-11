@@ -83,9 +83,14 @@ articles[1].reviews.create!(content: 'article review B1')
 articles[1].reviews.create!(content: 'article review B2')
 articles[2].reviews.create!(content: 'article review C1')
 
-Paper.create!([
+papers = Paper.create!([
   { title: 'Paper A1', new_user_id: users[0].id, active: true },
   { title: 'Paper B1', new_user_id: users[1].id, active: false },
   { title: 'Paper B2', new_user_id: users[1].id, active: true },
   { title: 'Paper B3', new_user_id: users[1].id, active: false },
 ])
+
+papers[0].reviews.create!(content: 'paper review A1')
+papers[1].reviews.create!(content: 'paper review B1')
+papers[1].reviews.create!(content: 'paper review B2')
+papers[2].reviews.create!(content: 'paper review C1')
