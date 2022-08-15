@@ -87,7 +87,6 @@ module AdaptiveAlias
               next if node.left.name != current_column.to_s
               next if klass.table_name != node.left.relation.name
 
-              node.left = node.left.clone
               node.left.name = alias_column.to_s
             end
           end
