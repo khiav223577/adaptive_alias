@@ -19,7 +19,6 @@ class ArticlesTest < Minitest::Test
     3.times do
       # --------- do rename migration ---------
       Article.connection.rename_column :articles, :user_id, :user_id_abc
-
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id} ORDER BY `articles`.`id` ASC LIMIT 1",
@@ -51,7 +50,6 @@ class ArticlesTest < Minitest::Test
     3.times do
       # --------- do rename migration ---------
       Article.connection.rename_column :articles, :user_id, :user_id_abc
-
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id} ORDER BY `articles`.`id` DESC LIMIT 1",
@@ -63,6 +61,35 @@ class ArticlesTest < Minitest::Test
       # --------- rollback rename migration ---------
       Article.connection.rename_column :articles, :user_id_abc, :user_id
       user = User.find_by(name: 'Catty')
+      assert_queries([
+        "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id_abc` = #{user.id} ORDER BY `articles`.`id` DESC LIMIT 1",
+        "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id} ORDER BY `articles`.`id` DESC LIMIT 1",
+      ]) do
+        assert_equal 'Article B3', user.articles.last.title
+      end
+    end
+  end
+
+  def test_same_model_last
+    user = User.find_by(name: 'Catty')
+    assert_queries([
+      "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id} ORDER BY `articles`.`id` DESC LIMIT 1",
+    ]) do
+      assert_equal 'Article B3', user.articles.last.title
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :articles, :user_id, :user_id_abc
+      assert_queries([
+        "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id} ORDER BY `articles`.`id` DESC LIMIT 1",
+        "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id_abc` = #{user.id} ORDER BY `articles`.`id` DESC LIMIT 1",
+      ]) do
+        assert_equal 'Article B3', user.articles.last.title
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :articles, :user_id_abc, :user_id
       assert_queries([
         "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id_abc` = #{user.id} ORDER BY `articles`.`id` DESC LIMIT 1",
         "SELECT `articles`.* FROM `articles` WHERE `articles`.`user_id` = #{user.id} ORDER BY `articles`.`id` DESC LIMIT 1",
@@ -165,6 +192,35 @@ class ArticlesTest < Minitest::Test
     end
   end
 
+  def test_same_model_pluck
+    user = User.find_by(name: 'Catty')
+    assert_queries([
+      "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id` = #{user.id}",
+    ]) do
+      assert_equal ['Article B1', 'Article B2', 'Article B3'], user.articles.pluck(:title)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :articles, :user_id, :user_id_abc
+      assert_queries([
+        "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id` = #{user.id}",
+        "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id_abc` = #{user.id}",
+      ]) do
+        assert_equal ['Article B1', 'Article B2', 'Article B3'], user.articles.pluck(:title)
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :articles, :user_id_abc, :user_id
+      assert_queries([
+        "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id_abc` = #{user.id}",
+        "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id` = #{user.id}",
+      ]) do
+        assert_equal ['Article B1', 'Article B2', 'Article B3'], user.articles.pluck(:title)
+      end
+    end
+  end
+
   def test_where_and_pluck
     user = User.find_by(name: 'Catty')
     assert_queries([
@@ -187,6 +243,35 @@ class ArticlesTest < Minitest::Test
       # --------- rollback rename migration ---------
       Article.connection.rename_column :articles, :user_id_abc, :user_id
       user = User.find_by(name: 'Catty')
+      assert_queries([
+        "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id_abc` = #{user.id} AND `articles`.`active` = TRUE",
+        "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id` = #{user.id} AND `articles`.`active` = TRUE",
+      ]) do
+        assert_equal ['Article B2'], user.articles.where(active: true).pluck(:title)
+      end
+    end
+  end
+
+  def test_same_model_where_and_pluck
+    user = User.find_by(name: 'Catty')
+    assert_queries([
+      "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id` = #{user.id} AND `articles`.`active` = TRUE",
+    ]) do
+      assert_equal ['Article B2'], user.articles.where(active: true).pluck(:title)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :articles, :user_id, :user_id_abc
+      assert_queries([
+        "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id` = #{user.id} AND `articles`.`active` = TRUE",
+        "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id_abc` = #{user.id} AND `articles`.`active` = TRUE",
+      ]) do
+        assert_equal ['Article B2'], user.articles.where(active: true).pluck(:title)
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :articles, :user_id_abc, :user_id
       assert_queries([
         "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id_abc` = #{user.id} AND `articles`.`active` = TRUE",
         "SELECT `articles`.`title` FROM `articles` WHERE `articles`.`user_id` = #{user.id} AND `articles`.`active` = TRUE",

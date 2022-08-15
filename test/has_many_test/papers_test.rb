@@ -19,7 +19,6 @@ class PapersTest < Minitest::Test
     3.times do
       # --------- do rename migration ---------
       Paper.connection.rename_column :papers, :new_user_id, :user_id
-
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `papers`.* FROM `papers` WHERE `papers`.`new_user_id` = #{user.id} ORDER BY `papers`.`id` ASC LIMIT 1",
@@ -51,7 +50,6 @@ class PapersTest < Minitest::Test
     3.times do
       # --------- do rename migration ---------
       Paper.connection.rename_column :papers, :new_user_id, :user_id
-
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `papers`.* FROM `papers` WHERE `papers`.`new_user_id` = #{user.id} ORDER BY `papers`.`id` DESC LIMIT 1",
@@ -63,6 +61,35 @@ class PapersTest < Minitest::Test
       # --------- rollback rename migration ---------
       Paper.connection.rename_column :papers, :user_id, :new_user_id
       user = User.find_by(name: 'Catty')
+      assert_queries([
+        "SELECT `papers`.* FROM `papers` WHERE `papers`.`user_id` = #{user.id} ORDER BY `papers`.`id` DESC LIMIT 1",
+        "SELECT `papers`.* FROM `papers` WHERE `papers`.`new_user_id` = #{user.id} ORDER BY `papers`.`id` DESC LIMIT 1",
+      ]) do
+        assert_equal 'Paper B3', user.papers.last.title
+      end
+    end
+  end
+
+  def test_same_model_last
+    user = User.find_by(name: 'Catty')
+    assert_queries([
+      "SELECT `papers`.* FROM `papers` WHERE `papers`.`new_user_id` = #{user.id} ORDER BY `papers`.`id` DESC LIMIT 1",
+    ]) do
+      assert_equal 'Paper B3', user.papers.last.title
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `papers`.* FROM `papers` WHERE `papers`.`new_user_id` = #{user.id} ORDER BY `papers`.`id` DESC LIMIT 1",
+        "SELECT `papers`.* FROM `papers` WHERE `papers`.`user_id` = #{user.id} ORDER BY `papers`.`id` DESC LIMIT 1",
+      ]) do
+        assert_equal 'Paper B3', user.papers.last.title
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
       assert_queries([
         "SELECT `papers`.* FROM `papers` WHERE `papers`.`user_id` = #{user.id} ORDER BY `papers`.`id` DESC LIMIT 1",
         "SELECT `papers`.* FROM `papers` WHERE `papers`.`new_user_id` = #{user.id} ORDER BY `papers`.`id` DESC LIMIT 1",
@@ -165,6 +192,35 @@ class PapersTest < Minitest::Test
     end
   end
 
+  def test_same_model_pluck
+    user = User.find_by(name: 'Catty')
+    assert_queries([
+      "SELECT `papers`.`title` FROM `papers` WHERE `papers`.`new_user_id` = #{user.id}",
+    ]) do
+      assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], user.papers.pluck(:title)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `papers`.`title` FROM `papers` WHERE `papers`.`new_user_id` = #{user.id}",
+        "SELECT `papers`.`title` FROM `papers` WHERE `papers`.`user_id` = #{user.id}",
+      ]) do
+        assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], user.papers.pluck(:title)
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
+      assert_queries([
+        "SELECT `papers`.`title` FROM `papers` WHERE `papers`.`user_id` = #{user.id}",
+        "SELECT `papers`.`title` FROM `papers` WHERE `papers`.`new_user_id` = #{user.id}",
+      ]) do
+        assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], user.papers.pluck(:title)
+      end
+    end
+  end
+
   def test_where_and_pluck
     user = User.find_by(name: 'Catty')
     assert_queries([
@@ -187,6 +243,35 @@ class PapersTest < Minitest::Test
       # --------- rollback rename migration ---------
       Paper.connection.rename_column :papers, :user_id, :new_user_id
       user = User.find_by(name: 'Catty')
+      assert_queries([
+        "SELECT `papers`.`title` FROM `papers` WHERE `papers`.`user_id` = #{user.id} AND `papers`.`active` = TRUE",
+        "SELECT `papers`.`title` FROM `papers` WHERE `papers`.`new_user_id` = #{user.id} AND `papers`.`active` = TRUE",
+      ]) do
+        assert_equal ['Paper B2'], user.papers.where(active: true).pluck(:title)
+      end
+    end
+  end
+
+  def test_same_model_where_and_pluck
+    user = User.find_by(name: 'Catty')
+    assert_queries([
+      "SELECT `papers`.`title` FROM `papers` WHERE `papers`.`new_user_id` = #{user.id} AND `papers`.`active` = TRUE",
+    ]) do
+      assert_equal ['Paper B2'], user.papers.where(active: true).pluck(:title)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `papers`.`title` FROM `papers` WHERE `papers`.`new_user_id` = #{user.id} AND `papers`.`active` = TRUE",
+        "SELECT `papers`.`title` FROM `papers` WHERE `papers`.`user_id` = #{user.id} AND `papers`.`active` = TRUE",
+      ]) do
+        assert_equal ['Paper B2'], user.papers.where(active: true).pluck(:title)
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
       assert_queries([
         "SELECT `papers`.`title` FROM `papers` WHERE `papers`.`user_id` = #{user.id} AND `papers`.`active` = TRUE",
         "SELECT `papers`.`title` FROM `papers` WHERE `papers`.`new_user_id` = #{user.id} AND `papers`.`active` = TRUE",
