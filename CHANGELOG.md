@@ -1,5 +1,9 @@
 ## Change Log
 
+### [upcoming](https://github.com/khiav223577/adaptive_alias/compare/v0.2.2...HEAD) 2022/08/15
+- [#16](https://github.com/khiav223577/adaptive_alias/pull/16) [Enhance] No need to clone node (@khiav223577)
+- [#15](https://github.com/khiav223577/adaptive_alias/pull/15) [Test] Add test cases to test calling pluck on same model (@khiav223577)
+
 ### [v0.2.2](https://github.com/khiav223577/adaptive_alias/compare/v0.2.1...v0.2.2) 2022/08/11
 - [#14](https://github.com/khiav223577/adaptive_alias/pull/14) [Fix] Fail to use backward-patch when target column has already been migrated (@khiav223577)
 
