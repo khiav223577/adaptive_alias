@@ -358,4 +358,60 @@ class PostsTest < Minitest::Test
     posts.each(&:destroy!)
     posts.clear
   end
+
+  def test_join
+    assert_queries([
+      "SELECT `title` FROM `users` INNER JOIN `posts` ON `posts`.`user_id_old` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['Post B1', 'Post B2', 'Post B3'], User.joins(:posts).where(name: 'Catty').pluck(:title)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Post.connection.rename_column :posts, :user_id_old, :user_id
+      assert_queries([
+        "SELECT `title` FROM `users` INNER JOIN `posts` ON `posts`.`user_id_old` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `title` FROM `users` INNER JOIN `posts` ON `posts`.`user_id` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Post B1', 'Post B2', 'Post B3'], User.joins(:posts).where(name: 'Catty').pluck(:title)
+      end
+
+      # --------- rollback rename migration ---------
+      Post.connection.rename_column :posts, :user_id, :user_id_old
+      assert_queries([
+        "SELECT `title` FROM `users` INNER JOIN `posts` ON `posts`.`user_id` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `title` FROM `users` INNER JOIN `posts` ON `posts`.`user_id_old` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Post B1', 'Post B2', 'Post B3'], User.joins(:posts).where(name: 'Catty').pluck(:title)
+      end
+    end
+  end
+
+  def test_reverse_join
+    assert_queries([
+      "SELECT `posts`.`title` FROM `posts` INNER JOIN `users` ON `users`.`id` = `posts`.`user_id_old` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['Post B1', 'Post B2', 'Post B3'], Post.joins(:user).merge(User.where(name: 'Catty')).pluck(:title)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Post.connection.rename_column :posts, :user_id_old, :user_id
+      assert_queries([
+        "SELECT `posts`.`title` FROM `posts` INNER JOIN `users` ON `users`.`id` = `posts`.`user_id_old` WHERE `users`.`name` = 'Catty'",
+        "SELECT `posts`.`title` FROM `posts` INNER JOIN `users` ON `users`.`id` = `posts`.`user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Post B1', 'Post B2', 'Post B3'], Post.joins(:user).merge(User.where(name: 'Catty')).pluck(:title)
+      end
+
+      # --------- rollback rename migration ---------
+      Post.connection.rename_column :posts, :user_id, :user_id_old
+      assert_queries([
+        "SELECT `posts`.`title` FROM `posts` INNER JOIN `users` ON `users`.`id` = `posts`.`user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `posts`.`title` FROM `posts` INNER JOIN `users` ON `users`.`id` = `posts`.`user_id_old` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Post B1', 'Post B2', 'Post B3'], Post.joins(:user).merge(User.where(name: 'Catty')).pluck(:title)
+      end
+    end
+  end
 end

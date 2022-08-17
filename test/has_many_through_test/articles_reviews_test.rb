@@ -193,4 +193,60 @@ class ArticlesReviewsTest < Minitest::Test
       end
     end
   end
+
+  def test_join
+    assert_queries([
+      "SELECT `content` FROM `users` INNER JOIN `articles` ON `articles`.`user_id` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Article' AND `reviews`.`reviewable_id` = `articles`.`id` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['article review B1', 'article review B2', 'article review C1'], User.joins(articles: :reviews).where(name: 'Catty').pluck(:content)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :articles, :user_id, :user_id_abc
+      assert_queries([
+        "SELECT `content` FROM `users` INNER JOIN `articles` ON `articles`.`user_id` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Article' AND `reviews`.`reviewable_id` = `articles`.`id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `content` FROM `users` INNER JOIN `articles` ON `articles`.`user_id_abc` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Article' AND `reviews`.`reviewable_id` = `articles`.`id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['article review B1', 'article review B2', 'article review C1'], User.joins(articles: :reviews).where(name: 'Catty').pluck(:content)
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :articles, :user_id_abc, :user_id
+      assert_queries([
+        "SELECT `content` FROM `users` INNER JOIN `articles` ON `articles`.`user_id_abc` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Article' AND `reviews`.`reviewable_id` = `articles`.`id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `content` FROM `users` INNER JOIN `articles` ON `articles`.`user_id` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Article' AND `reviews`.`reviewable_id` = `articles`.`id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['article review B1', 'article review B2', 'article review C1'], User.joins(articles: :reviews).where(name: 'Catty').pluck(:content)
+      end
+    end
+  end
+
+  def test_reverse_join
+    assert_queries([
+      "SELECT `reviews`.`content` FROM `reviews` INNER JOIN `articles` ON `articles`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Article') INNER JOIN `users` ON `users`.`id` = `articles`.`user_id` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['article review B1', 'article review B2', 'article review C1'], Review.joins(article: :user).merge(User.where(name: 'Catty')).pluck(:content)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :articles, :user_id, :user_id_abc
+      assert_queries([
+        "SELECT `reviews`.`content` FROM `reviews` INNER JOIN `articles` ON `articles`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Article') INNER JOIN `users` ON `users`.`id` = `articles`.`user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `reviews`.`content` FROM `reviews` INNER JOIN `articles` ON `articles`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Article') INNER JOIN `users` ON `users`.`id` = `articles`.`user_id_abc` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['article review B1', 'article review B2', 'article review C1'], Review.joins(article: :user).merge(User.where(name: 'Catty')).pluck(:content)
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :articles, :user_id_abc, :user_id
+      assert_queries([
+        "SELECT `reviews`.`content` FROM `reviews` INNER JOIN `articles` ON `articles`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Article') INNER JOIN `users` ON `users`.`id` = `articles`.`user_id_abc` WHERE `users`.`name` = 'Catty'",
+        "SELECT `reviews`.`content` FROM `reviews` INNER JOIN `articles` ON `articles`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Article') INNER JOIN `users` ON `users`.`id` = `articles`.`user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['article review B1', 'article review B2', 'article review C1'], Review.joins(article: :user).merge(User.where(name: 'Catty')).pluck(:content)
+      end
+    end
+  end
 end
