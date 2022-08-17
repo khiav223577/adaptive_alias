@@ -1,6 +1,7 @@
 ## Change Log
 
-### [upcoming](https://github.com/khiav223577/adaptive_alias/compare/v0.2.2...HEAD) 2022/08/15
+### [v0.2.3](https://github.com/khiav223577/adaptive_alias/compare/v0.2.2...v0.2.3) 2022/08/17
+- [#17](https://github.com/khiav223577/adaptive_alias/pull/17) [Feature] Support joins (@khiav223577)
 - [#16](https://github.com/khiav223577/adaptive_alias/pull/16) [Enhance] No need to clone node (@khiav223577)
 - [#15](https://github.com/khiav223577/adaptive_alias/pull/15) [Test] Add test cases to test calling pluck on same model (@khiav223577)
 
