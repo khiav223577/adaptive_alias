@@ -358,4 +358,60 @@ class PapersTest < Minitest::Test
     papers.each(&:destroy!)
     papers.clear
   end
+
+  def test_join
+    assert_queries([
+      "SELECT `title` FROM `users` INNER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], User.joins(:papers).where(name: 'Catty').pluck(:title)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `title` FROM `users` INNER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `title` FROM `users` INNER JOIN `papers` ON `papers`.`user_id` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], User.joins(:papers).where(name: 'Catty').pluck(:title)
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
+      assert_queries([
+        "SELECT `title` FROM `users` INNER JOIN `papers` ON `papers`.`user_id` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `title` FROM `users` INNER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], User.joins(:papers).where(name: 'Catty').pluck(:title)
+      end
+    end
+  end
+
+  def test_reverse_join
+    assert_queries([
+      "SELECT `papers`.`title` FROM `papers` INNER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], Paper.joins(:user).merge(User.where(name: 'Catty')).pluck(:title)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `papers`.`title` FROM `papers` INNER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `papers`.`title` FROM `papers` INNER JOIN `users` ON `users`.`id` = `papers`.`user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], Paper.joins(:user).merge(User.where(name: 'Catty')).pluck(:title)
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
+      assert_queries([
+        "SELECT `papers`.`title` FROM `papers` INNER JOIN `users` ON `users`.`id` = `papers`.`user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `papers`.`title` FROM `papers` INNER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], Paper.joins(:user).merge(User.where(name: 'Catty')).pluck(:title)
+      end
+    end
+  end
 end

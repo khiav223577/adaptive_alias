@@ -148,4 +148,64 @@ class ProfileTest < Minitest::Test
   ensure
     user.create_profile(profile.as_json) if user.profile == nil
   end
+
+  def test_join
+    assert_queries([
+      "SELECT `id_number` FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+    ]) do
+      assert_equal 'B1234', User.joins(:profile).where(name: 'Catty').pick(:id_number)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT `id_number` FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+        "SELECT `id_number` FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id_new` WHERE `users`.`name` = 'Catty' LIMIT 1",
+      ]) do
+        assert_equal 'B1234', User.joins(:profile).where(name: 'Catty').pick(:id_number)
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT `id_number` FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id_new` WHERE `users`.`name` = 'Catty' LIMIT 1",
+        "SELECT `id_number` FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+      ]) do
+        assert_equal 'B1234', User.joins(:profile).where(name: 'Catty').pick(:id_number)
+      end
+    end
+  end
+
+  def test_reverse_join
+    assert_queries([
+      "SELECT `profiles`.`id_number` FROM `profiles` INNER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+    ]) do
+      assert_equal 'B1234', Profile.joins(:user).merge(User.where(name: 'Catty')).pick(:id_number)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT `profiles`.`id_number` FROM `profiles` INNER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+        "SELECT `profiles`.`id_number` FROM `profiles` INNER JOIN `users` ON `users`.`profile_id_new` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+      ]) do
+        assert_equal 'B1234', Profile.joins(:user).merge(User.where(name: 'Catty')).pick(:id_number)
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT `profiles`.`id_number` FROM `profiles` INNER JOIN `users` ON `users`.`profile_id_new` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+        "SELECT `profiles`.`id_number` FROM `profiles` INNER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+      ]) do
+        assert_equal 'B1234', Profile.joins(:user).merge(User.where(name: 'Catty')).pick(:id_number)
+      end
+    end
+  end
 end

@@ -193,4 +193,60 @@ class PostsReviewsTest < Minitest::Test
       end
     end
   end
+
+  def test_join
+    assert_queries([
+      "SELECT `content` FROM `users` INNER JOIN `posts` ON `posts`.`user_id_old` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Post' AND `reviews`.`reviewable_id` = `posts`.`id` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['post review B1', 'post review B2', 'post review C1'], User.joins(posts: :reviews).where(name: 'Catty').pluck(:content)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Post.connection.rename_column :posts, :user_id_old, :user_id
+      assert_queries([
+        "SELECT `content` FROM `users` INNER JOIN `posts` ON `posts`.`user_id_old` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Post' AND `reviews`.`reviewable_id` = `posts`.`id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `content` FROM `users` INNER JOIN `posts` ON `posts`.`user_id` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Post' AND `reviews`.`reviewable_id` = `posts`.`id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['post review B1', 'post review B2', 'post review C1'], User.joins(posts: :reviews).where(name: 'Catty').pluck(:content)
+      end
+
+      # --------- rollback rename migration ---------
+      Post.connection.rename_column :posts, :user_id, :user_id_old
+      assert_queries([
+        "SELECT `content` FROM `users` INNER JOIN `posts` ON `posts`.`user_id` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Post' AND `reviews`.`reviewable_id` = `posts`.`id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `content` FROM `users` INNER JOIN `posts` ON `posts`.`user_id_old` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Post' AND `reviews`.`reviewable_id` = `posts`.`id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['post review B1', 'post review B2', 'post review C1'], User.joins(posts: :reviews).where(name: 'Catty').pluck(:content)
+      end
+    end
+  end
+
+  def test_reverse_join
+    assert_queries([
+      "SELECT `reviews`.`content` FROM `reviews` INNER JOIN `posts` ON `posts`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Post') INNER JOIN `users` ON `users`.`id` = `posts`.`user_id_old` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['post review B1', 'post review B2', 'post review C1'], Review.joins(post: :user).merge(User.where(name: 'Catty')).pluck(:content)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Post.connection.rename_column :posts, :user_id_old, :user_id
+      assert_queries([
+        "SELECT `reviews`.`content` FROM `reviews` INNER JOIN `posts` ON `posts`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Post') INNER JOIN `users` ON `users`.`id` = `posts`.`user_id_old` WHERE `users`.`name` = 'Catty'",
+        "SELECT `reviews`.`content` FROM `reviews` INNER JOIN `posts` ON `posts`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Post') INNER JOIN `users` ON `users`.`id` = `posts`.`user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['post review B1', 'post review B2', 'post review C1'], Review.joins(post: :user).merge(User.where(name: 'Catty')).pluck(:content)
+      end
+
+      # --------- rollback rename migration ---------
+      Post.connection.rename_column :posts, :user_id, :user_id_old
+      assert_queries([
+        "SELECT `reviews`.`content` FROM `reviews` INNER JOIN `posts` ON `posts`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Post') INNER JOIN `users` ON `users`.`id` = `posts`.`user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `reviews`.`content` FROM `reviews` INNER JOIN `posts` ON `posts`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Post') INNER JOIN `users` ON `users`.`id` = `posts`.`user_id_old` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['post review B1', 'post review B2', 'post review C1'], Review.joins(post: :user).merge(User.where(name: 'Catty')).pluck(:content)
+      end
+    end
+  end
 end
