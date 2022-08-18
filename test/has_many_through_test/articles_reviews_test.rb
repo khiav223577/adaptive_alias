@@ -194,7 +194,7 @@ class ArticlesReviewsTest < Minitest::Test
     end
   end
 
-  def test_join
+  def test_pluck_with_join
     assert_queries([
       "SELECT `content` FROM `users` INNER JOIN `articles` ON `articles`.`user_id` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Article' AND `reviews`.`reviewable_id` = `articles`.`id` WHERE `users`.`name` = 'Catty'",
     ]) do
@@ -222,7 +222,7 @@ class ArticlesReviewsTest < Minitest::Test
     end
   end
 
-  def test_reverse_join
+  def test_pluck_with_join_reversely
     assert_queries([
       "SELECT `reviews`.`content` FROM `reviews` INNER JOIN `articles` ON `articles`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Article') INNER JOIN `users` ON `users`.`id` = `articles`.`user_id` WHERE `users`.`name` = 'Catty'",
     ]) do

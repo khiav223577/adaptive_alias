@@ -84,11 +84,25 @@ module AdaptiveAlias
           patch.remove!
 
           if relation
-            relation.where_clause.send(:predicates).each do |node|
-              next if node.left.name != current_column.to_s
-              next if klass.table_name != node.left.relation.name
+            fix_arel_attributes = proc do |attr|
+              next if not attr.is_a?(Arel::Attributes::Attribute)
+              next if attr.name != current_column.to_s
+              next if klass.table_name != attr.relation.name
 
-              node.left.name = alias_column.to_s
+              attr.name = alias_column.to_s
+            end
+
+            joins = relation.arel.source.right # @ctx.source.right << create_join(relation, nil, klass)
+            joins.each do |join|
+              join.right.expr.children.each do |node|
+                fix_arel_attributes.call(node.left)
+                fix_arel_attributes.call(node.right)
+              end
+            end
+
+            relation.where_clause.send(:predicates).each do |node|
+              fix_arel_attributes.call(node.left)
+              fix_arel_attributes.call(node.right)
             end
           end
 
