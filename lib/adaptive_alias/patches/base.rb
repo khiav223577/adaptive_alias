@@ -94,7 +94,7 @@ module AdaptiveAlias
 
             joins = relation.arel.source.right # @ctx.source.right << create_join(relation, nil, klass)
             joins.each do |join|
-              join.right.expr.children.each do |node|
+              each_nodes([join.right.expr]) do |node|
                 fix_arel_attributes.call(node.left)
                 fix_arel_attributes.call(node.right)
               end
@@ -129,6 +129,19 @@ module AdaptiveAlias
 
       def mark_removable
         @removable = true
+      end
+
+      private
+
+      def each_nodes(nodes, &block)
+        nodes.each do |node|
+          case node
+          when Arel::Nodes::Equality
+            yield(node)
+          when Arel::Nodes::And
+            each_nodes(node.children, &block)
+          end
+        end
       end
     end
   end
