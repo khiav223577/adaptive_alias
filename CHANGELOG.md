@@ -1,5 +1,8 @@
 ## Change Log
 
+### [v0.2.4](https://github.com/khiav223577/adaptive_alias/compare/v0.2.3...v0.2.4) 2022/08/18
+- [#18](https://github.com/khiav223577/adaptive_alias/pull/18) [Fix] get model from a relation with join will not generate right query (after migration) (@khiav223577)
+
 ### [v0.2.3](https://github.com/khiav223577/adaptive_alias/compare/v0.2.2...v0.2.3) 2022/08/17
 - [#17](https://github.com/khiav223577/adaptive_alias/pull/17) [Feature] Support joins (@khiav223577)
 - [#16](https://github.com/khiav223577/adaptive_alias/pull/16) [Enhance] No need to clone node (@khiav223577)
