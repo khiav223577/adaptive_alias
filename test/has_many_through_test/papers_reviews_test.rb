@@ -222,6 +222,34 @@ class PapersReviewsTest < Minitest::Test
     end
   end
 
+  def test_pluck_with_left_join
+    assert_queries([
+      "SELECT `content` FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` LEFT OUTER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Paper' AND `reviews`.`reviewable_id` = `papers`.`id` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['paper review B1', 'paper review B2', 'paper review C1', nil], User.left_joins(papers: :reviews).where(name: 'Catty').pluck(:content)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `content` FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` LEFT OUTER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Paper' AND `reviews`.`reviewable_id` = `papers`.`id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `content` FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`user_id` = `users`.`id` LEFT OUTER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Paper' AND `reviews`.`reviewable_id` = `papers`.`id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['paper review B1', 'paper review B2', 'paper review C1', nil], User.left_joins(papers: :reviews).where(name: 'Catty').pluck(:content)
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
+      assert_queries([
+        "SELECT `content` FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`user_id` = `users`.`id` LEFT OUTER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Paper' AND `reviews`.`reviewable_id` = `papers`.`id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `content` FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` LEFT OUTER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Paper' AND `reviews`.`reviewable_id` = `papers`.`id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['paper review B1', 'paper review B2', 'paper review C1', nil], User.left_joins(papers: :reviews).where(name: 'Catty').pluck(:content)
+      end
+    end
+  end
+
   def test_first_with_join
     assert_queries([
       "SELECT `users`.* FROM `users` INNER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Paper' AND `reviews`.`reviewable_id` = `papers`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
@@ -246,6 +274,34 @@ class PapersReviewsTest < Minitest::Test
         "SELECT `users`.* FROM `users` INNER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` INNER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Paper' AND `reviews`.`reviewable_id` = `papers`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
       ]) do
         assert_equal 'Catty', User.joins(papers: :reviews).where(name: 'Catty').first.name
+      end
+    end
+  end
+
+  def test_first_with_left_join
+    assert_queries([
+      "SELECT `users`.* FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` LEFT OUTER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Paper' AND `reviews`.`reviewable_id` = `papers`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+    ]) do
+      assert_equal 'Catty', User.left_joins(papers: :reviews).where(name: 'Catty').first.name
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `users`.* FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` LEFT OUTER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Paper' AND `reviews`.`reviewable_id` = `papers`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+        "SELECT `users`.* FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`user_id` = `users`.`id` LEFT OUTER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Paper' AND `reviews`.`reviewable_id` = `papers`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+      ]) do
+        assert_equal 'Catty', User.left_joins(papers: :reviews).where(name: 'Catty').first.name
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
+      assert_queries([
+        "SELECT `users`.* FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`user_id` = `users`.`id` LEFT OUTER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Paper' AND `reviews`.`reviewable_id` = `papers`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+        "SELECT `users`.* FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` LEFT OUTER JOIN `reviews` ON `reviews`.`reviewable_type` = 'Paper' AND `reviews`.`reviewable_id` = `papers`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+      ]) do
+        assert_equal 'Catty', User.left_joins(papers: :reviews).where(name: 'Catty').first.name
       end
     end
   end
@@ -278,6 +334,34 @@ class PapersReviewsTest < Minitest::Test
     end
   end
 
+  def test_pluck_with_left_join_reversely
+    assert_queries([
+      "SELECT `reviews`.`content` FROM `reviews` LEFT OUTER JOIN `papers` ON `papers`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Paper') LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['paper review B1', 'paper review B2', 'paper review C1'], Review.left_joins(paper: :user).merge(User.where(name: 'Catty')).pluck(:content)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `reviews`.`content` FROM `reviews` LEFT OUTER JOIN `papers` ON `papers`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Paper') LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `reviews`.`content` FROM `reviews` LEFT OUTER JOIN `papers` ON `papers`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Paper') LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['paper review B1', 'paper review B2', 'paper review C1'], Review.left_joins(paper: :user).merge(User.where(name: 'Catty')).pluck(:content)
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
+      assert_queries([
+        "SELECT `reviews`.`content` FROM `reviews` LEFT OUTER JOIN `papers` ON `papers`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Paper') LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `reviews`.`content` FROM `reviews` LEFT OUTER JOIN `papers` ON `papers`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Paper') LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['paper review B1', 'paper review B2', 'paper review C1'], Review.left_joins(paper: :user).merge(User.where(name: 'Catty')).pluck(:content)
+      end
+    end
+  end
+
   def test_first_with_join_reversely
     assert_queries([
       "SELECT `reviews`.* FROM `reviews` INNER JOIN `papers` ON `papers`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Paper') INNER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty' ORDER BY `reviews`.`id` ASC LIMIT 1",
@@ -302,6 +386,34 @@ class PapersReviewsTest < Minitest::Test
         "SELECT `reviews`.* FROM `reviews` INNER JOIN `papers` ON `papers`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Paper') INNER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty' ORDER BY `reviews`.`id` ASC LIMIT 1",
       ]) do
         assert_equal 'paper review B1', Review.joins(paper: :user).merge(User.where(name: 'Catty')).first.content
+      end
+    end
+  end
+
+  def test_to_a_with_left_join_reversely
+    assert_queries([
+      "SELECT `reviews`.* FROM `reviews` LEFT OUTER JOIN `papers` ON `papers`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Paper') LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['paper review B1', 'paper review B2', 'paper review C1'], Review.left_joins(paper: :user).merge(User.where(name: 'Catty')).map(&:content)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `reviews`.* FROM `reviews` LEFT OUTER JOIN `papers` ON `papers`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Paper') LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `reviews`.* FROM `reviews` LEFT OUTER JOIN `papers` ON `papers`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Paper') LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['paper review B1', 'paper review B2', 'paper review C1'], Review.left_joins(paper: :user).merge(User.where(name: 'Catty')).map(&:content)
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
+      assert_queries([
+        "SELECT `reviews`.* FROM `reviews` LEFT OUTER JOIN `papers` ON `papers`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Paper') LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `reviews`.* FROM `reviews` LEFT OUTER JOIN `papers` ON `papers`.`id` = `reviews`.`reviewable_id` AND (`reviews`.`reviewable_type` = 'Paper') LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['paper review B1', 'paper review B2', 'paper review C1'], Review.left_joins(paper: :user).merge(User.where(name: 'Catty')).map(&:content)
       end
     end
   end

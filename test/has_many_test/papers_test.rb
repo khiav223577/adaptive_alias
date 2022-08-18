@@ -387,6 +387,34 @@ class PapersTest < Minitest::Test
     end
   end
 
+  def test_pluck_with_left_join
+    assert_queries([
+      "SELECT `title` FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], User.left_joins(:papers).where(name: 'Catty').pluck(:title)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `title` FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `title` FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`user_id` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], User.left_joins(:papers).where(name: 'Catty').pluck(:title)
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
+      assert_queries([
+        "SELECT `title` FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`user_id` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `title` FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], User.left_joins(:papers).where(name: 'Catty').pluck(:title)
+      end
+    end
+  end
+
   def test_first_with_join
     assert_queries([
       "SELECT `users`.* FROM `users` INNER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
@@ -411,6 +439,34 @@ class PapersTest < Minitest::Test
         "SELECT `users`.* FROM `users` INNER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
       ]) do
         assert_equal 'Catty', User.joins(:papers).where(name: 'Catty').first.name
+      end
+    end
+  end
+
+  def test_first_with_left_join
+    assert_queries([
+      "SELECT `users`.* FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+    ]) do
+      assert_equal 'Catty', User.left_joins(:papers).where(name: 'Catty').first.name
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `users`.* FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+        "SELECT `users`.* FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`user_id` = `users`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+      ]) do
+        assert_equal 'Catty', User.left_joins(:papers).where(name: 'Catty').first.name
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
+      assert_queries([
+        "SELECT `users`.* FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`user_id` = `users`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+        "SELECT `users`.* FROM `users` LEFT OUTER JOIN `papers` ON `papers`.`new_user_id` = `users`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+      ]) do
+        assert_equal 'Catty', User.left_joins(:papers).where(name: 'Catty').first.name
       end
     end
   end
@@ -443,6 +499,34 @@ class PapersTest < Minitest::Test
     end
   end
 
+  def test_pluck_with_left_join_reversely
+    assert_queries([
+      "SELECT `papers`.`title` FROM `papers` LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], Paper.left_joins(:user).merge(User.where(name: 'Catty')).pluck(:title)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `papers`.`title` FROM `papers` LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `papers`.`title` FROM `papers` LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], Paper.left_joins(:user).merge(User.where(name: 'Catty')).pluck(:title)
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
+      assert_queries([
+        "SELECT `papers`.`title` FROM `papers` LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `papers`.`title` FROM `papers` LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], Paper.left_joins(:user).merge(User.where(name: 'Catty')).pluck(:title)
+      end
+    end
+  end
+
   def test_first_with_join_reversely
     assert_queries([
       "SELECT `papers`.* FROM `papers` INNER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty' ORDER BY `papers`.`id` ASC LIMIT 1",
@@ -467,6 +551,34 @@ class PapersTest < Minitest::Test
         "SELECT `papers`.* FROM `papers` INNER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty' ORDER BY `papers`.`id` ASC LIMIT 1",
       ]) do
         assert_equal 'Paper B1', Paper.joins(:user).merge(User.where(name: 'Catty')).first.title
+      end
+    end
+  end
+
+  def test_to_a_with_left_join_reversely
+    assert_queries([
+      "SELECT `papers`.* FROM `papers` LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+    ]) do
+      assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], Paper.left_joins(:user).merge(User.where(name: 'Catty')).map(&:title)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Paper.connection.rename_column :papers, :new_user_id, :user_id
+      assert_queries([
+        "SELECT `papers`.* FROM `papers` LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `papers`.* FROM `papers` LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], Paper.left_joins(:user).merge(User.where(name: 'Catty')).map(&:title)
+      end
+
+      # --------- rollback rename migration ---------
+      Paper.connection.rename_column :papers, :user_id, :new_user_id
+      assert_queries([
+        "SELECT `papers`.* FROM `papers` LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`user_id` WHERE `users`.`name` = 'Catty'",
+        "SELECT `papers`.* FROM `papers` LEFT OUTER JOIN `users` ON `users`.`id` = `papers`.`new_user_id` WHERE `users`.`name` = 'Catty'",
+      ]) do
+        assert_equal ['Paper B1', 'Paper B2', 'Paper B3'], Paper.left_joins(:user).merge(User.where(name: 'Catty')).map(&:title)
       end
     end
   end
