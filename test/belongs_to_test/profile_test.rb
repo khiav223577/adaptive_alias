@@ -149,7 +149,7 @@ class ProfileTest < Minitest::Test
     user.create_profile(profile.as_json) if user.profile == nil
   end
 
-  def test_join
+  def test_pluck_with_join
     assert_queries([
       "SELECT `id_number` FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' LIMIT 1",
     ]) do
@@ -179,7 +179,97 @@ class ProfileTest < Minitest::Test
     end
   end
 
-  def test_reverse_join
+  def test_pluck_with_left_join
+    assert_queries([
+      "SELECT `id_number` FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+    ]) do
+      assert_equal 'B1234', User.left_joins(:profile).where(name: 'Catty').pick(:id_number)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT `id_number` FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+        "SELECT `id_number` FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id_new` WHERE `users`.`name` = 'Catty' LIMIT 1",
+      ]) do
+        assert_equal 'B1234', User.left_joins(:profile).where(name: 'Catty').pick(:id_number)
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT `id_number` FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id_new` WHERE `users`.`name` = 'Catty' LIMIT 1",
+        "SELECT `id_number` FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+      ]) do
+        assert_equal 'B1234', User.left_joins(:profile).where(name: 'Catty').pick(:id_number)
+      end
+    end
+  end
+
+  def test_first_with_join
+    assert_queries([
+      "SELECT `users`.* FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+    ]) do
+      assert_equal 'Catty', User.joins(:profile).where(name: 'Catty').first.name
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT `users`.* FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+        "SELECT `users`.* FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id_new` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+      ]) do
+        assert_equal 'Catty', User.joins(:profile).where(name: 'Catty').first.name
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT `users`.* FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id_new` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+        "SELECT `users`.* FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+      ]) do
+        assert_equal 'Catty', User.joins(:profile).where(name: 'Catty').first.name
+      end
+    end
+  end
+
+  def test_first_with_left_join
+    assert_queries([
+      "SELECT `users`.* FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+    ]) do
+      assert_equal 'Catty', User.left_joins(:profile).where(name: 'Catty').first.name
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT `users`.* FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+        "SELECT `users`.* FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id_new` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+      ]) do
+        assert_equal 'Catty', User.left_joins(:profile).where(name: 'Catty').first.name
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT `users`.* FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id_new` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+        "SELECT `users`.* FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
+      ]) do
+        assert_equal 'Catty', User.left_joins(:profile).where(name: 'Catty').first.name
+      end
+    end
+  end
+
+  def test_pluck_with_join_reversely
     assert_queries([
       "SELECT `profiles`.`id_number` FROM `profiles` INNER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
     ]) do
@@ -205,6 +295,96 @@ class ProfileTest < Minitest::Test
         "SELECT `profiles`.`id_number` FROM `profiles` INNER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
       ]) do
         assert_equal 'B1234', Profile.joins(:user).merge(User.where(name: 'Catty')).pick(:id_number)
+      end
+    end
+  end
+
+  def test_pluck_with_left_join_reversely
+    assert_queries([
+      "SELECT `profiles`.`id_number` FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+    ]) do
+      assert_equal 'B1234', Profile.left_joins(:user).merge(User.where(name: 'Catty')).pick(:id_number)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT `profiles`.`id_number` FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+        "SELECT `profiles`.`id_number` FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id_new` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+      ]) do
+        assert_equal 'B1234', Profile.left_joins(:user).merge(User.where(name: 'Catty')).pick(:id_number)
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT `profiles`.`id_number` FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id_new` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+        "SELECT `profiles`.`id_number` FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
+      ]) do
+        assert_equal 'B1234', Profile.left_joins(:user).merge(User.where(name: 'Catty')).pick(:id_number)
+      end
+    end
+  end
+
+  def test_first_with_join_reversely
+    assert_queries([
+      "SELECT `profiles`.* FROM `profiles` INNER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
+    ]) do
+      assert_equal 'B1234', Profile.joins(:user).merge(User.where(name: 'Catty')).first.id_number
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT `profiles`.* FROM `profiles` INNER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
+        "SELECT `profiles`.* FROM `profiles` INNER JOIN `users` ON `users`.`profile_id_new` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
+      ]) do
+        assert_equal 'B1234', Profile.joins(:user).merge(User.where(name: 'Catty')).first.id_number
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT `profiles`.* FROM `profiles` INNER JOIN `users` ON `users`.`profile_id_new` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
+        "SELECT `profiles`.* FROM `profiles` INNER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
+      ]) do
+        assert_equal 'B1234', Profile.joins(:user).merge(User.where(name: 'Catty')).first.id_number
+      end
+    end
+  end
+
+  def test_first_with_left_join_reversely
+    assert_queries([
+      "SELECT `profiles`.* FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
+    ]) do
+      assert_equal 'B1234', Profile.left_joins(:user).merge(User.where(name: 'Catty')).first.id_number
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT `profiles`.* FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
+        "SELECT `profiles`.* FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id_new` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
+      ]) do
+        assert_equal 'B1234', Profile.left_joins(:user).merge(User.where(name: 'Catty')).first.id_number
+      end
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT `profiles`.* FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id_new` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
+        "SELECT `profiles`.* FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
+      ]) do
+        assert_equal 'B1234', Profile.left_joins(:user).merge(User.where(name: 'Catty')).first.id_number
       end
     end
   end

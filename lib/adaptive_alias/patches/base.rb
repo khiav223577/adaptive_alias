@@ -68,6 +68,21 @@ module AdaptiveAlias
           next true
         end
 
+        fix_arel_attributes = proc do |attr|
+          next if not attr.is_a?(Arel::Attributes::Attribute)
+          next if attr.name != current_column.to_s
+          next if klass.table_name != attr.relation.name
+
+          attr.name = alias_column.to_s
+        end
+
+        fix_arel_nodes = proc do |nodes|
+          each_nodes(nodes) do |node|
+            fix_arel_attributes.call(node.left)
+            fix_arel_attributes.call(node.right)
+          end
+        end
+
         @fix_association = proc do |relation, reflection, error|
           next false if not patch.removable
           next false if patch.removed
@@ -84,12 +99,9 @@ module AdaptiveAlias
           patch.remove!
 
           if relation
-            relation.where_clause.send(:predicates).each do |node|
-              next if node.left.name != current_column.to_s
-              next if klass.table_name != node.left.relation.name
-
-              node.left.name = alias_column.to_s
-            end
+            joins = relation.arel.source.right # @ctx.source.right << create_join(relation, nil, klass)
+            fix_arel_nodes.call(joins.map{|s| s.right.expr })
+            fix_arel_nodes.call(relation.where_clause.send(:predicates))
           end
 
           reflection.clear_association_scope_cache if reflection
@@ -115,6 +127,19 @@ module AdaptiveAlias
 
       def mark_removable
         @removable = true
+      end
+
+      private
+
+      def each_nodes(nodes, &block)
+        nodes.each do |node|
+          case node
+          when Arel::Nodes::Equality
+            yield(node)
+          when Arel::Nodes::And
+            each_nodes(node.children, &block)
+          end
+        end
       end
     end
   end
