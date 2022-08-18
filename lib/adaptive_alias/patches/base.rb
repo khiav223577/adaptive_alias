@@ -76,6 +76,13 @@ module AdaptiveAlias
           attr.name = alias_column.to_s
         end
 
+        fix_arel_nodes = proc do |nodes|
+          each_nodes(nodes) do |node|
+            fix_arel_attributes.call(node.left)
+            fix_arel_attributes.call(node.right)
+          end
+        end
+
         @fix_association = proc do |relation, reflection, error|
           next false if not patch.removable
           next false if patch.removed
@@ -93,17 +100,8 @@ module AdaptiveAlias
 
           if relation
             joins = relation.arel.source.right # @ctx.source.right << create_join(relation, nil, klass)
-            joins.each do |join|
-              each_nodes([join.right.expr]) do |node|
-                fix_arel_attributes.call(node.left)
-                fix_arel_attributes.call(node.right)
-              end
-            end
-
-            relation.where_clause.send(:predicates).each do |node|
-              fix_arel_attributes.call(node.left)
-              fix_arel_attributes.call(node.right)
-            end
+            fix_arel_nodes.call(joins.map{|s| s.right.expr })
+            fix_arel_nodes.call(relation.where_clause.send(:predicates))
           end
 
           reflection.clear_association_scope_cache if reflection
