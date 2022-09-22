@@ -222,9 +222,9 @@ Metrics/CyclomaticComplexity:
   Enabled: true
 
 Layout/LineLength:
-  Description: 'Limit lines to 160 characters.'
+  Description: 'Limit lines to 180 characters.'
   StyleGuide: 'https://github.com/bbatsov/ruby-style-guide#80-character-limits'
-  Max: 160
+  Max: 180
   Enabled: true
   Exclude:
     - 'config/locales/**'
