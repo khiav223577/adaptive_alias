@@ -62,7 +62,7 @@ module AdaptiveAlias
         @fix_missing_attribute = proc do |error_klass, error|
           next false if not patch.removable
           next false if patch.removed
-          next false if klass != error_klass
+          next false if not (error_klass <= klass)
           next false if not expected_attribute_err_msgs.include?(error.message)
 
           patch.remove!
