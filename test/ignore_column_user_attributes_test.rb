@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class StiUserAttributesTest < Minitest::Test
+class IgnoreColumnUserAttributesTest < Minitest::Test
   def setup
   end
 
@@ -9,7 +9,7 @@ class StiUserAttributesTest < Minitest::Test
   end
 
   def test_read
-    user = Users::AgentUser.find_by(name: 'Pepper')
+    user = Users::IgnoreColumnUser.find_by(name: 'Akka')
     profile_id = user.profile.id
 
     assert_queries(0) do
@@ -20,7 +20,7 @@ class StiUserAttributesTest < Minitest::Test
     3.times do
       # --------- do rename migration ---------
       User.connection.rename_column :users, :profile_id, :profile_id_new
-      user = Users::AgentUser.find_by(name: 'Pepper')
+      user = Users::IgnoreColumnUser.find_by(name: 'Akka')
       assert_queries(0) do
         assert_equal profile_id, user.profile_id_new
         assert_equal profile_id, user.profile_id
@@ -28,7 +28,7 @@ class StiUserAttributesTest < Minitest::Test
 
       # --------- rollback rename migration ---------
       User.connection.rename_column :users, :profile_id_new, :profile_id
-      user = Users::AgentUser.find_by(name: 'Pepper')
+      user = Users::IgnoreColumnUser.find_by(name: 'Akka')
       assert_queries(0) do
         assert_equal profile_id, user.profile_id_new
         assert_equal profile_id, user.profile_id
@@ -37,7 +37,7 @@ class StiUserAttributesTest < Minitest::Test
   end
 
   def test_write
-    user = Users::AgentUser.find_by(name: 'Pepper')
+    user = Users::IgnoreColumnUser.find_by(name: 'Akka')
     assert_queries(0) do
       user.profile_id = 123
       user.profile_id_new = 123
@@ -46,7 +46,7 @@ class StiUserAttributesTest < Minitest::Test
     3.times do
       # --------- do rename migration ---------
       User.connection.rename_column :users, :profile_id, :profile_id_new
-      user = Users::AgentUser.find_by(name: 'Pepper')
+      user = Users::IgnoreColumnUser.find_by(name: 'Akka')
       assert_queries(0) do
         user.profile_id = 123
         user.profile_id_new = 123
@@ -56,7 +56,7 @@ class StiUserAttributesTest < Minitest::Test
 
       # --------- rollback rename migration ---------
       User.connection.rename_column :users, :profile_id_new, :profile_id
-      user = Users::AgentUser.find_by(name: 'Pepper')
+      user = Users::IgnoreColumnUser.find_by(name: 'Akka')
       assert_queries(0) do
         user.profile_id = 123
         user.profile_id_new = 123
@@ -67,7 +67,7 @@ class StiUserAttributesTest < Minitest::Test
   end
 
   def test_read_write
-    user = Users::AgentUser.find_by(name: 'Pepper')
+    user = Users::IgnoreColumnUser.find_by(name: 'Akka')
     profile_id = user.profile.id
 
     assert_queries(0) do
@@ -77,7 +77,7 @@ class StiUserAttributesTest < Minitest::Test
     3.times do
       # --------- do rename migration ---------
       User.connection.rename_column :users, :profile_id, :profile_id_new
-      user = Users::AgentUser.find_by(name: 'Pepper')
+      user = Users::IgnoreColumnUser.find_by(name: 'Akka')
 
       assert_queries(0) do
         assert_equal profile_id, user.profile_id_new
@@ -85,7 +85,7 @@ class StiUserAttributesTest < Minitest::Test
 
       # --------- rollback rename migration ---------
       User.connection.rename_column :users, :profile_id_new, :profile_id
-      user = Users::AgentUser.find_by(name: 'Pepper')
+      user = Users::IgnoreColumnUser.find_by(name: 'Akka')
 
       assert_queries(0) do
         user.profile_id_new = 123
@@ -96,9 +96,9 @@ class StiUserAttributesTest < Minitest::Test
 
   def test_select_old_column
     assert_queries([
-      "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
+      "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
     ]) do
-      assert_equal [3, 4], Users::AgentUser.limit(2).select(:profile_id).map(&:profile_id)
+      assert_equal [5], Users::IgnoreColumnUser.limit(2).select(:profile_id).map(&:profile_id)
     end
 
     3.times do
@@ -106,28 +106,28 @@ class StiUserAttributesTest < Minitest::Test
       User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
-        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
-        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
+        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
+        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [3, 4], Users::AgentUser.limit(2).select(:profile_id).map(&:profile_id)
+        assert_equal [5], Users::IgnoreColumnUser.limit(2).select(:profile_id).map(&:profile_id)
       end
 
       # --------- rollback rename migration ---------
       User.connection.rename_column :users, :profile_id_new, :profile_id
       assert_queries([
-        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
-        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
+        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
+        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [3, 4], Users::AgentUser.limit(2).select(:profile_id).map(&:profile_id)
+        assert_equal [5], Users::IgnoreColumnUser.limit(2).select(:profile_id).map(&:profile_id)
       end
     end
   end
 
   def test_select_new_column
     assert_queries([
-      "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
+      "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
     ]) do
-      assert_equal [3, 4], Users::AgentUser.limit(2).select(:profile_id_new).map(&:profile_id_new)
+      assert_equal [5], Users::IgnoreColumnUser.limit(2).select(:profile_id_new).map(&:profile_id_new)
     end
 
     3.times do
@@ -135,28 +135,28 @@ class StiUserAttributesTest < Minitest::Test
       User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
-        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
-        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
+        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
+        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [3, 4], Users::AgentUser.limit(2).select(:profile_id_new).map(&:profile_id_new)
+        assert_equal [5], Users::IgnoreColumnUser.limit(2).select(:profile_id_new).map(&:profile_id_new)
       end
 
       # --------- rollback rename migration ---------
       User.connection.rename_column :users, :profile_id_new, :profile_id
       assert_queries([
-        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
-        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
+        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
+        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [3, 4], Users::AgentUser.limit(2).select(:profile_id_new).map(&:profile_id_new)
+        assert_equal [5], Users::IgnoreColumnUser.limit(2).select(:profile_id_new).map(&:profile_id_new)
       end
     end
   end
 
   def test_pluck_old_column
     assert_queries([
-      "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
+      "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
     ]) do
-      assert_equal [3, 4], Users::AgentUser.limit(2).pluck(:profile_id)
+      assert_equal [5], Users::IgnoreColumnUser.limit(2).pluck(:profile_id)
     end
 
     3.times do
@@ -164,28 +164,28 @@ class StiUserAttributesTest < Minitest::Test
       User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
-        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
-        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
+        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
+        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [3, 4], Users::AgentUser.limit(2).pluck(:profile_id)
+        assert_equal [5], Users::IgnoreColumnUser.limit(2).pluck(:profile_id)
       end
 
       # --------- rollback rename migration ---------
       User.connection.rename_column :users, :profile_id_new, :profile_id
       assert_queries([
-        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
-        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
+        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
+        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [3, 4], Users::AgentUser.limit(2).pluck(:profile_id)
+        assert_equal [5], Users::IgnoreColumnUser.limit(2).pluck(:profile_id)
       end
     end
   end
 
   def test_pluck_new_column
     assert_queries([
-      "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
+      "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
     ]) do
-      assert_equal [3, 4], Users::AgentUser.limit(2).pluck(:profile_id_new)
+      assert_equal [5], Users::IgnoreColumnUser.limit(2).pluck(:profile_id_new)
     end
 
     3.times do
@@ -193,19 +193,19 @@ class StiUserAttributesTest < Minitest::Test
       User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
-        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
-        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
+        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
+        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [3, 4], Users::AgentUser.limit(2).pluck(:profile_id_new)
+        assert_equal [5], Users::IgnoreColumnUser.limit(2).pluck(:profile_id_new)
       end
 
       # --------- rollback rename migration ---------
       User.connection.rename_column :users, :profile_id_new, :profile_id
       assert_queries([
-        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
-        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::AgentUser' LIMIT 2",
+        "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
+        "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [3, 4], Users::AgentUser.limit(2).pluck(:profile_id_new)
+        assert_equal [5], Users::IgnoreColumnUser.limit(2).pluck(:profile_id_new)
       end
     end
   end
