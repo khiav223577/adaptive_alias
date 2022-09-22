@@ -3,6 +3,8 @@ class User < ActiveRecord::Base
   include AdaptiveAlias[:profile_id, :profile_id_new]
 
   has_many :posts
+  has_many :agent_posts, class_name: 'Posts::AgentPost'
+  has_many :active_agent_posts, ->{ where(active: true) }, class_name: 'Posts::AgentPost'
   has_many :active_posts, ->{ where(active: true) }, class_name: 'Post'
   has_many :posts_reviews, through: :posts, source: :reviews, class_name: 'Review'
   has_many :active_posts_reviews, through: :active_posts, source: :reviews, class_name: 'Review'

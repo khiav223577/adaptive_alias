@@ -96,7 +96,7 @@ class ProfileTest < Minitest::Test
 
   def test_pluck_old_column
     assert_queries(1) do
-      assert_equal [1, 2], User.pluck(:profile_id)
+      assert_equal [1, 2], User.limit(2).pluck(:profile_id)
     end
 
     3.times do
@@ -104,20 +104,20 @@ class ProfileTest < Minitest::Test
       User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries(2) do
-        assert_equal [1, 2], User.pluck(:profile_id)
+        assert_equal [1, 2], User.limit(2).pluck(:profile_id)
       end
 
       # --------- rollback rename migration ---------
       User.connection.rename_column :users, :profile_id_new, :profile_id
       assert_queries(2) do
-        assert_equal [1, 2], User.pluck(:profile_id)
+        assert_equal [1, 2], User.limit(2).pluck(:profile_id)
       end
     end
   end
 
   def test_pluck_new_column
     assert_queries(1) do
-      assert_equal [1, 2], User.pluck(:profile_id_new)
+      assert_equal [1, 2], User.limit(2).pluck(:profile_id_new)
     end
 
     3.times do
@@ -125,13 +125,13 @@ class ProfileTest < Minitest::Test
       User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries(2) do
-        assert_equal [1, 2], User.pluck(:profile_id_new)
+        assert_equal [1, 2], User.limit(2).pluck(:profile_id_new)
       end
 
       # --------- rollback rename migration ---------
       User.connection.rename_column :users, :profile_id_new, :profile_id
       assert_queries(2) do
-        assert_equal [1, 2], User.pluck(:profile_id_new)
+        assert_equal [1, 2], User.limit(2).pluck(:profile_id_new)
       end
     end
   end
