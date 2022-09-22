@@ -12,6 +12,7 @@ module AdaptiveAlias
   end
 end
 
-module ActiveRecord::Core::ClassMethods
+# Nested module include is not supported until ruby 3.0
+class << ActiveRecord::Base
   prepend AdaptiveAlias::Hooks::ActiveRecordCore
 end
