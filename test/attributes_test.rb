@@ -19,7 +19,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
       user = User.find_by(name: 'Catty')
       assert_queries(0) do
         assert_equal profile_id, user.profile_id_new
@@ -27,7 +27,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
       user = User.find_by(name: 'Catty')
       assert_queries(0) do
         assert_equal profile_id, user.profile_id_new
@@ -45,7 +45,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
       user = User.find_by(name: 'Catty')
       assert_queries(0) do
         user.profile_id = 123
@@ -55,7 +55,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
       user = User.find_by(name: 'Catty')
       assert_queries(0) do
         user.profile_id = 123
@@ -76,7 +76,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
       user = User.find_by(name: 'Catty')
 
       assert_queries(0) do
@@ -84,7 +84,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
       user = User.find_by(name: 'Catty')
 
       assert_queries(0) do

@@ -20,7 +20,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
 
       user = User.find_by(name: 'Catty')
       assert_queries([
@@ -30,7 +30,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `profiles`.* FROM `profiles` WHERE `profiles`.`id` = #{profile_id} LIMIT 1",
@@ -52,7 +52,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
 
       user = User.find_by(name: 'Catty')
       assert_queries([
@@ -62,7 +62,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
       user = User.find_by(name: 'Catty')
       assert_queries([
         "SELECT `profiles`.`id_number` FROM `profiles` WHERE `profiles`.`id` = #{profile_id} LIMIT 1",
@@ -84,7 +84,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
 
       user = User.find_by(name: 'Catty')
       assert_queries([
@@ -94,7 +94,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
       user = User.find_by(name: 'Catty')
 
       assert_queries([
@@ -119,7 +119,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
 
       user = User.find_by(name: 'Catty')
       profile = user.profile
@@ -133,7 +133,7 @@ class ProfileTest < Minitest::Test
       user.create_profile(profile.as_json)
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
       user = User.find_by(name: 'Catty')
       profile = user.profile
 
@@ -158,7 +158,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
         "SELECT `id_number` FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' LIMIT 1",
@@ -168,7 +168,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
 
       assert_queries([
         "SELECT `id_number` FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id_new` WHERE `users`.`name` = 'Catty' LIMIT 1",
@@ -188,7 +188,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
         "SELECT `id_number` FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' LIMIT 1",
@@ -198,7 +198,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
 
       assert_queries([
         "SELECT `id_number` FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id_new` WHERE `users`.`name` = 'Catty' LIMIT 1",
@@ -218,7 +218,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
         "SELECT `users`.* FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
@@ -228,7 +228,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
 
       assert_queries([
         "SELECT `users`.* FROM `users` INNER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id_new` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
@@ -248,7 +248,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
         "SELECT `users`.* FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
@@ -258,7 +258,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
 
       assert_queries([
         "SELECT `users`.* FROM `users` LEFT OUTER JOIN `profiles` ON `profiles`.`id` = `users`.`profile_id_new` WHERE `users`.`name` = 'Catty' ORDER BY `users`.`id` ASC LIMIT 1",
@@ -278,7 +278,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
         "SELECT `profiles`.`id_number` FROM `profiles` INNER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
@@ -288,7 +288,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
 
       assert_queries([
         "SELECT `profiles`.`id_number` FROM `profiles` INNER JOIN `users` ON `users`.`profile_id_new` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
@@ -308,7 +308,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
         "SELECT `profiles`.`id_number` FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
@@ -318,7 +318,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
 
       assert_queries([
         "SELECT `profiles`.`id_number` FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id_new` = `profiles`.`id` WHERE `users`.`name` = 'Catty' LIMIT 1",
@@ -338,7 +338,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
         "SELECT `profiles`.* FROM `profiles` INNER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
@@ -348,7 +348,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
 
       assert_queries([
         "SELECT `profiles`.* FROM `profiles` INNER JOIN `users` ON `users`.`profile_id_new` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
@@ -368,7 +368,7 @@ class ProfileTest < Minitest::Test
 
     3.times do
       # --------- do rename migration ---------
-      Article.connection.rename_column :users, :profile_id, :profile_id_new
+      User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
         "SELECT `profiles`.* FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
@@ -378,7 +378,7 @@ class ProfileTest < Minitest::Test
       end
 
       # --------- rollback rename migration ---------
-      Article.connection.rename_column :users, :profile_id_new, :profile_id
+      User.connection.rename_column :users, :profile_id_new, :profile_id
 
       assert_queries([
         "SELECT `profiles`.* FROM `profiles` LEFT OUTER JOIN `users` ON `users`.`profile_id_new` = `profiles`.`id` WHERE `users`.`name` = 'Catty' ORDER BY `profiles`.`id` ASC LIMIT 1",
