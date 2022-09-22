@@ -62,7 +62,7 @@ module AdaptiveAlias
         @fix_missing_attribute = proc do |error_klass, error|
           next false if not patch.removable
           next false if patch.removed
-          next false if klass != error_klass
+          next false if klass.table_name != error_klass.table_name
           next false if not expected_attribute_err_msgs.include?(error.message)
 
           patch.remove!
@@ -91,8 +91,8 @@ module AdaptiveAlias
           ambiguous = expected_ambiguous_association_err_msgs.include?(error.message)
 
           if ambiguous
-            next false if relation and klass != relation.klass
-            next false if reflection and klass != reflection.klass
+            next false if relation and klass.table_name != relation.klass.table_name
+            next false if reflection and klass.table_name != reflection.klass.table_name
           end
 
           next false if not expected_association_err_msgs.include?(error.message) and not ambiguous
@@ -120,8 +120,12 @@ module AdaptiveAlias
 
       def remove!
         @removed = true
-        @klass.reset_column_information
-        @klass.columns_hash
+
+        reset_caches(@klass)
+        ActiveRecord::Base.descendants.each do |model_klass|
+          reset_caches(model_klass) if model_klass.table_name == @klass.table_name
+        end
+
         @fix_association = nil
         @fix_missing_attribute = nil
       end
@@ -131,6 +135,15 @@ module AdaptiveAlias
       end
 
       private
+
+      def reset_caches(klass)
+        # We need to call reload_schema_from_cache (which is called in reset_column_information),
+        # in order to reset klass.attributes_builder which are initialized with outdated defaults.
+        # If not, it will not raise missing attributes error when we try to access the column which has already been renamed,
+        # and we will have no way to know the column has been renamed since no error is raised for us to rescue.
+        klass.reset_column_information
+        klass.columns_hash
+      end
 
       def each_nodes(nodes, &block)
         nodes.each do |node|

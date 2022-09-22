@@ -2,11 +2,13 @@ ActiveRecord::Schema.define do
   self.verbose = false
 
   create_table :users, force: true do |t|
+    t.string :type
     t.string :name
     t.integer :profile_id
   end
 
   create_table :posts, force: true do |t|
+    t.string :type
     t.integer :user_id_old
     t.string :title
     t.boolean :active
@@ -54,6 +56,8 @@ RailsCompatibility.setup_autoload_paths [File.expand_path('../models/', __FILE__
 users = User.create!([
   { name: 'Doggy', profile: Profile.new(id_number: 'A1234') },
   { name: 'Catty', profile: Profile.new(id_number: 'B1234') },
+  { type: 'Users::AgentUser', name: 'Pepper', profile: Profile.new(id_number: 'C1234') },
+  { type: 'Users::AgentUser', name: 'Hachu', profile: Profile.new(id_number: 'D1234') },
 ])
 
 users[0].tag_list.add('awesome', 'slick')
@@ -64,6 +68,12 @@ posts = Post.create!([
   { title: 'Post B1', user_id_old: users[1].id, active: false },
   { title: 'Post B2', user_id_old: users[1].id, active: true },
   { title: 'Post B3', user_id_old: users[1].id, active: false },
+  { title: 'Post C1', user_id_old: users[2].id, active: false },
+  { title: 'Post C2', user_id_old: users[2].id, active: true },
+  { title: 'Post C3', user_id_old: users[2].id, active: false },
+  { type: 'Posts::AgentPost', title: 'Post D1', user_id_old: users[3].id, active: false },
+  { type: 'Posts::AgentPost', title: 'Post D2', user_id_old: users[3].id, active: true },
+  { type: 'Posts::AgentPost', title: 'Post D3', user_id_old: users[3].id, active: false },
 ])
 
 posts[0].reviews.create!(content: 'post review A1')
