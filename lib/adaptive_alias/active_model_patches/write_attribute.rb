@@ -20,6 +20,7 @@ module AdaptiveAlias
   end
 end
 
+# Nested module include is not supported until ruby 3.0
 class ActiveRecord::Base
   prepend AdaptiveAlias::ActiveModelPatches::WriteAttribute
 end

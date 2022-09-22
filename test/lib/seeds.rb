@@ -4,6 +4,7 @@ ActiveRecord::Schema.define do
   create_table :users, force: true do |t|
     t.string :type
     t.string :name
+    t.string :ignored_columns
     t.integer :profile_id
   end
 
@@ -58,6 +59,7 @@ users = User.create!([
   { name: 'Catty', profile: Profile.new(id_number: 'B1234') },
   { type: 'Users::AgentUser', name: 'Pepper', profile: Profile.new(id_number: 'C1234') },
   { type: 'Users::AgentUser', name: 'Hachu', profile: Profile.new(id_number: 'D1234') },
+  { type: 'Users::IgnoreColumnUser', name: 'Akka', profile: Profile.new(id_number: 'E1234') },
 ])
 
 users[0].tag_list.add('awesome', 'slick')

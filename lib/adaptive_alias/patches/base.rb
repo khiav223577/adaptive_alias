@@ -100,7 +100,14 @@ module AdaptiveAlias
           patch.remove!
 
           if relation
+            relation.reset # reset @arel
+
             joins = relation.arel.source.right # @ctx.source.right << create_join(relation, nil, klass)
+
+            # adjust select fields
+            index = relation.select_values.index(current_column)
+            relation.select_values[index] = alias_column if index
+
             fix_arel_nodes.call(joins.map{|s| s.right.expr })
             fix_arel_nodes.call(relation.where_clause.send(:predicates))
           end

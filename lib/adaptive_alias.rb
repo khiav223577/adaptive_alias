@@ -13,6 +13,7 @@ require 'adaptive_alias/hooks/association'
 require 'adaptive_alias/hooks/association_scope'
 require 'adaptive_alias/hooks/singular_association'
 require 'adaptive_alias/hooks/relation'
+require 'adaptive_alias/hooks/active_record_core'
 
 module AdaptiveAlias
   @log_interval = 10 * 60
