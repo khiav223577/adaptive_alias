@@ -122,8 +122,8 @@ module AdaptiveAlias
         @removed = true
 
         reset_caches(@klass)
-        @klass.descendants.each do |sti_klass|
-          reset_caches(sti_klass)
+        ActiveRecord::Base.descendants.each do |model_klass|
+          reset_caches(model_klass) if model_klass.table_name == @klass.table_name
         end
 
         @fix_association = nil
