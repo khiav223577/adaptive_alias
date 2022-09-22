@@ -47,6 +47,7 @@ module AdaptiveAlias
         expected_association_err_msgs = [
           "Mysql2::Error: Unknown column '#{klass.table_name}.#{current_column}' in 'where clause'".freeze,
           "Mysql2::Error: Unknown column '#{klass.table_name}.#{current_column}' in 'on clause'".freeze,
+          "Mysql2::Error: Unknown column '#{klass.table_name}.#{current_column}' in 'field list'".freeze,
         ].freeze
 
         expected_ambiguous_association_err_msgs = [
