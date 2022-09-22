@@ -120,8 +120,12 @@ module AdaptiveAlias
 
       def remove!
         @removed = true
-        @klass.reset_column_information
-        @klass.columns_hash
+
+        reset_caches(@klass)
+        @klass.descendants.each do |sti_klass|
+          reset_caches(sti_klass)
+        end
+
         @fix_association = nil
         @fix_missing_attribute = nil
       end
@@ -131,6 +135,15 @@ module AdaptiveAlias
       end
 
       private
+
+      def reset_caches(klass)
+        # We need to call reload_schema_from_cache (which is called in reset_column_information),
+        # in order to reset klass.attributes_builder which are initialized with outdated defaults.
+        # If not, it will not raise missing attributes error when we try to access the column which has already been renamed,
+        # and we will have no way to know the column has been renamed since no error is raised for us to rescue.
+        klass.reset_column_information
+        klass.columns_hash
+      end
 
       def each_nodes(nodes, &block)
         nodes.each do |node|
