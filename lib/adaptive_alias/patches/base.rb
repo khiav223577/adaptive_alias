@@ -62,7 +62,7 @@ module AdaptiveAlias
         @fix_missing_attribute = proc do |error_klass, error|
           next false if not patch.removable
           next false if patch.removed
-          next false if not (error_klass <= klass)
+          next false if klass.table_name != error_klass.table_name
           next false if not expected_attribute_err_msgs.include?(error.message)
 
           patch.remove!
@@ -91,8 +91,8 @@ module AdaptiveAlias
           ambiguous = expected_ambiguous_association_err_msgs.include?(error.message)
 
           if ambiguous
-            next false if relation and klass != relation.klass
-            next false if reflection and klass != reflection.klass
+            next false if relation and klass.table_name != relation.klass.table_name
+            next false if reflection and klass.table_name != reflection.klass.table_name
           end
 
           next false if not expected_association_err_msgs.include?(error.message) and not ambiguous
