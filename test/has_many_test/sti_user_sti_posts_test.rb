@@ -300,7 +300,6 @@ class StiUserStiPostsTest < Minitest::Test
       user = Users::AgentUser.find_by(name: 'Hachu')
       assert_queries([
         "INSERT INTO `posts` (`type`, `user_id_old`, `title`) VALUES ('Posts::AgentPost', 4, 'new post')",
-        'ROLLBACK',
         "INSERT INTO `posts` (`type`, `user_id`, `title`) VALUES ('Posts::AgentPost', 4, 'new post')",
       ]) do
         post = user.agent_posts.create!(title: 'new post')
@@ -314,7 +313,6 @@ class StiUserStiPostsTest < Minitest::Test
       user = Users::AgentUser.find_by(name: 'Hachu')
       assert_queries([
         "INSERT INTO `posts` (`type`, `user_id`, `title`) VALUES ('Posts::AgentPost', 4, 'new post')",
-        'ROLLBACK',
         "INSERT INTO `posts` (`type`, `user_id_old`, `title`) VALUES ('Posts::AgentPost', 4, 'new post')",
       ]) do
         post = user.agent_posts.create!(title: 'new post')

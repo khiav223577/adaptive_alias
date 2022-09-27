@@ -2,15 +2,15 @@ module AdaptiveAlias
   module Hooks
     module Relation
       def pluck(*)
-        AdaptiveAlias.rescue_statement_invalid(self, nil){ super }
+        AdaptiveAlias.rescue_statement_invalid(relation: self){ super }
       end
 
       def select_all(*)
-        AdaptiveAlias.rescue_statement_invalid(self, nil){ super }
+        AdaptiveAlias.rescue_statement_invalid(relation: self){ super }
       end
 
       def exec_queries(*)
-        AdaptiveAlias.rescue_statement_invalid(self, nil){ super }
+        AdaptiveAlias.rescue_statement_invalid(relation: self){ super }
       end
     end
   end

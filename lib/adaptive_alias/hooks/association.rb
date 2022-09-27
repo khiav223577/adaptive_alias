@@ -2,11 +2,7 @@ module AdaptiveAlias
   module Hooks
     module Association
       def find_target(*)
-        AdaptiveAlias.rescue_statement_invalid(nil, reflection){ super }
-      end
-
-      def create!(attributes = {}, &block)
-        AdaptiveAlias.rescue_statement_invalid(association_scope, reflection){ super }
+        AdaptiveAlias.rescue_statement_invalid(reflection: reflection){ super }
       end
     end
   end

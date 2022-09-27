@@ -84,7 +84,7 @@ module AdaptiveAlias
           end
         end
 
-        @fix_association = proc do |relation, reflection, error|
+        @fix_association = proc do |relation, reflection, model, error|
           next false if not patch.removable
           next false if patch.removed
 
@@ -93,11 +93,20 @@ module AdaptiveAlias
           if ambiguous
             next false if relation and klass.table_name != relation.klass.table_name
             next false if reflection and klass.table_name != reflection.klass.table_name
+            next false if model and klass.table_name != model.class.table_name
+            next false if !relation and !reflection and !model
           end
 
           next false if not expected_association_err_msgs.include?(error.message) and not ambiguous
 
           patch.remove!
+
+          if model
+            attributes = model.instance_variable_get(:@attributes).instance_variable_get(:@attributes)
+            attributes.transform_keys! do |key|
+              key == current_column.to_s ? alias_column.to_s : key
+            end
+          end
 
           if relation
             relation.reset # reset @arel

@@ -10,19 +10,19 @@ ActiveRecord::Schema.define do
 
   create_table :posts, force: true do |t|
     t.string :type
-    t.integer :user_id_old
+    t.integer :user_id_old, null: false
     t.string :title
     t.boolean :active
   end
 
   create_table :articles, force: true do |t|
-    t.integer :user_id
+    t.integer :user_id, null: false
     t.string :title
     t.boolean :active
   end
 
   create_table :papers, force: true do |t|
-    t.integer :new_user_id
+    t.integer :new_user_id, null: false
     t.string :title
     t.boolean :active
   end
@@ -37,9 +37,9 @@ ActiveRecord::Schema.define do
   end
 
   create_table :taggings, force: true do |t|
-    t.integer :tag_id
-    t.string :taggable_type
-    t.integer :taggable_id
+    t.integer :tag_id, null: false
+    t.string :taggable_type, null: false
+    t.integer :taggable_id, null: false
     t.string :tagger_type
     t.integer :tagger_id
     t.string :context
@@ -47,7 +47,7 @@ ActiveRecord::Schema.define do
 
   create_table :reviews, force: true do |t|
     t.text :content
-    t.belongs_to :reviewable, polymorphic: true
+    t.belongs_to :reviewable, polymorphic: true, null: false
   end
 end
 
