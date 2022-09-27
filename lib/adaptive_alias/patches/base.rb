@@ -93,6 +93,8 @@ module AdaptiveAlias
           if ambiguous
             next false if relation and klass.table_name != relation.klass.table_name
             next false if reflection and klass.table_name != reflection.klass.table_name
+            next false if model and klass.table_name != model.class.table_name
+            next false if !relation and !reflection and !model
           end
 
           next false if not expected_association_err_msgs.include?(error.message) and not ambiguous
