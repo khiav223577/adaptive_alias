@@ -388,4 +388,165 @@ class ProfileTest < Minitest::Test
       end
     end
   end
+
+  def test_create_by_association
+    profile = Profile.first
+
+    new_user = nil
+    assert_queries_and_rollback(lambda {
+      [
+        "INSERT INTO `users` (`name`, `profile_id`) VALUES ('New User', 1)",
+        "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{new_user.id} AND `taggings`.`taggable_type` = 'User'",
+      ]
+    }) do
+      new_user = User.create!(name: 'New User', profile: profile)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+      assert_queries_and_rollback(lambda {
+        [
+          "INSERT INTO `users` (`name`, `profile_id`) VALUES ('New User', 1)",
+          "INSERT INTO `users` (`name`, `profile_id_new`) VALUES ('New User', 1)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{new_user.id} AND `taggings`.`taggable_type` = 'User'",
+        ]
+      }) do
+        new_user = User.create!(name: 'New User', profile: profile)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries_and_rollback(lambda {
+        [
+          "INSERT INTO `users` (`name`, `profile_id_new`) VALUES ('New User', 1)",
+          "INSERT INTO `users` (`name`, `profile_id`) VALUES ('New User', 1)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{new_user.id} AND `taggings`.`taggable_type` = 'User'",
+        ]
+      }) do
+        new_user = User.create!(name: 'New User', profile: profile)
+      end
+    end
+  end
+
+  def test_nested_create_by_association
+    new_user = nil
+    assert_queries_and_rollback(lambda {
+      [
+        "INSERT INTO `profiles` (`id_number`) VALUES ('New1234')",
+        "INSERT INTO `users` (`name`, `profile_id`) VALUES ('New User', #{new_user.profile_id})",
+        "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{new_user.id} AND `taggings`.`taggable_type` = 'User'",
+      ]
+    }) do
+      new_user = User.create!(name: 'New User', profile: Profile.new(id_number: 'New1234'))
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+      assert_queries_and_rollback(lambda {
+        [
+          "INSERT INTO `profiles` (`id_number`) VALUES ('New1234')",
+          "INSERT INTO `users` (`name`, `profile_id`) VALUES ('New User', #{new_user.profile_id})",
+          "INSERT INTO `users` (`name`, `profile_id_new`) VALUES ('New User', #{new_user.profile_id})",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{new_user.id} AND `taggings`.`taggable_type` = 'User'",
+        ]
+      }) do
+        new_user = User.create!(name: 'New User', profile: Profile.new(id_number: 'New1234'))
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries_and_rollback(lambda {
+        [
+          "INSERT INTO `profiles` (`id_number`) VALUES ('New1234')",
+          "INSERT INTO `users` (`name`, `profile_id_new`) VALUES ('New User', #{new_user.profile_id})",
+          "INSERT INTO `users` (`name`, `profile_id`) VALUES ('New User', #{new_user.profile_id})",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{new_user.id} AND `taggings`.`taggable_type` = 'User'",
+        ]
+      }) do
+        new_user = User.create!(name: 'New User', profile: Profile.new(id_number: 'New1234'))
+      end
+    end
+  end
+
+  def test_create_by_old_column
+    profile = Profile.first
+
+    new_user = nil
+    assert_queries_and_rollback(lambda {
+      [
+        "INSERT INTO `users` (`name`, `profile_id`) VALUES ('New User', 1)",
+        "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{new_user.id} AND `taggings`.`taggable_type` = 'User'",
+      ]
+    }) do
+      new_user = User.create!(name: 'New User', profile_id: profile.id)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+      assert_queries_and_rollback(lambda {
+        [
+          "INSERT INTO `users` (`name`, `profile_id`) VALUES ('New User', 1)",
+          "INSERT INTO `users` (`name`, `profile_id_new`) VALUES ('New User', 1)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{new_user.id} AND `taggings`.`taggable_type` = 'User'",
+        ]
+      }) do
+        new_user = User.create!(name: 'New User', profile_id: profile.id)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries_and_rollback(lambda {
+        [
+          "INSERT INTO `users` (`name`, `profile_id_new`) VALUES ('New User', 1)",
+          "INSERT INTO `users` (`name`, `profile_id`) VALUES ('New User', 1)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{new_user.id} AND `taggings`.`taggable_type` = 'User'",
+        ]
+      }) do
+        new_user = User.create!(name: 'New User', profile_id: profile.id)
+      end
+    end
+  end
+
+  def test_create_by_new_column
+    profile = Profile.first
+
+    new_user = nil
+    assert_queries_and_rollback(lambda {
+      [
+        "INSERT INTO `users` (`name`, `profile_id`) VALUES ('New User', 1)",
+        "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{new_user.id} AND `taggings`.`taggable_type` = 'User'",
+      ]
+    }) do
+      new_user = User.create!(name: 'New User', profile_id_new: profile.id)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+      assert_queries_and_rollback(lambda {
+        [
+          "INSERT INTO `users` (`name`, `profile_id`) VALUES ('New User', 1)",
+          "INSERT INTO `users` (`name`, `profile_id_new`) VALUES ('New User', 1)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{new_user.id} AND `taggings`.`taggable_type` = 'User'",
+        ]
+      }) do
+        new_user = User.create!(name: 'New User', profile_id_new: profile.id)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries_and_rollback(lambda {
+        [
+          "INSERT INTO `users` (`name`, `profile_id_new`) VALUES ('New User', 1)",
+          "INSERT INTO `users` (`name`, `profile_id`) VALUES ('New User', 1)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{new_user.id} AND `taggings`.`taggable_type` = 'User'",
+        ]
+      }) do
+        new_user = User.create!(name: 'New User', profile_id_new: profile.id)
+      end
+    end
+  end
 end

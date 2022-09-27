@@ -24,6 +24,7 @@ def assert_queries(expected, event_key = 'sql.active_record')
   end
 
   yield
+  expected = expected.call if expected.is_a?(Proc)
 
   case expected
   when Integer
@@ -37,6 +38,21 @@ def assert_queries(expected, event_key = 'sql.active_record')
   end
 ensure
   ActiveSupport::Notifications.unsubscribe(subscriber)
+end
+
+def with_rollback
+  ActiveRecord::Base.transaction do
+    yield
+    fail ActiveRecord::Rollback
+  end
+end
+
+def assert_queries_and_rollback(expected, event_key = 'sql.active_record')
+  with_rollback do
+    assert_queries(expected, event_key) do
+      yield
+    end
+  end
 end
 
 # make suer to rollback db schema even if some test cases fail
