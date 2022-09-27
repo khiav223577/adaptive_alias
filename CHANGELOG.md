@@ -1,5 +1,8 @@
 ## Change Log
 
+### [v1.1.0](https://github.com/khiav223577/adaptive_alias/compare/v1.0.0...v1.1.0) 2022/09/27
+- [#22](https://github.com/khiav223577/adaptive_alias/pull/22) [Fix] creation via autosave(belongs_to) association  (@khiav223577)
+
 ### [v1.0.0](https://github.com/khiav223577/adaptive_alias/compare/v0.2.4...v1.0.0) 2022/09/22
 - [#21](https://github.com/khiav223577/adaptive_alias/pull/21) [Fix] Model with ignored_columns or calling find_by directly on model class with aliased column argument will fail (@khiav223577)
 - [#20](https://github.com/khiav223577/adaptive_alias/pull/20) [Fix] Problems with STI classes and models that uses same table name (@khiav223577)
