@@ -300,7 +300,7 @@ class ArticlesTest < Minitest::Test
       user = User.find_by(name: 'Catty')
       assert_queries([
         "INSERT INTO `articles` (`user_id`, `title`) VALUES (2, 'new article')",
-        "INSERT INTO `articles` (`title`, `user_id_abc`) VALUES ('new article', 2)",
+        "INSERT INTO `articles` (`user_id_abc`, `title`) VALUES (2, 'new article')",
       ]) do
         article = user.articles.create!(title: 'new article')
       end
@@ -313,7 +313,7 @@ class ArticlesTest < Minitest::Test
       user = User.find_by(name: 'Catty')
       assert_queries([
         "INSERT INTO `articles` (`user_id_abc`, `title`) VALUES (2, 'new article')",
-        "INSERT INTO `articles` (`title`, `user_id`) VALUES ('new article', 2)",
+        "INSERT INTO `articles` (`user_id`, `title`) VALUES (2, 'new article')",
       ]) do
         article = user.articles.create!(title: 'new article')
       end

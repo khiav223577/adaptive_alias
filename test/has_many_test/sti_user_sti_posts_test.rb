@@ -300,7 +300,7 @@ class StiUserStiPostsTest < Minitest::Test
       user = Users::AgentUser.find_by(name: 'Hachu')
       assert_queries([
         "INSERT INTO `posts` (`type`, `user_id_old`, `title`) VALUES ('Posts::AgentPost', 4, 'new post')",
-        "INSERT INTO `posts` (`type`, `title`, `user_id`) VALUES ('Posts::AgentPost', 'new post', 4)",
+        "INSERT INTO `posts` (`type`, `user_id`, `title`) VALUES ('Posts::AgentPost', 4, 'new post')",
       ]) do
         post = user.agent_posts.create!(title: 'new post')
       end
@@ -313,7 +313,7 @@ class StiUserStiPostsTest < Minitest::Test
       user = Users::AgentUser.find_by(name: 'Hachu')
       assert_queries([
         "INSERT INTO `posts` (`type`, `user_id`, `title`) VALUES ('Posts::AgentPost', 4, 'new post')",
-        "INSERT INTO `posts` (`type`, `title`, `user_id_old`) VALUES ('Posts::AgentPost', 'new post', 4)",
+        "INSERT INTO `posts` (`type`, `user_id_old`, `title`) VALUES ('Posts::AgentPost', 4, 'new post')",
       ]) do
         post = user.agent_posts.create!(title: 'new post')
       end
