@@ -43,12 +43,12 @@ module AdaptiveAlias
       end
     end
 
-    def rescue_statement_invalid(relation, reflection, &block)
+    def rescue_statement_invalid(relation: nil, reflection: nil, model: nil, &block)
       yield
     rescue ActiveRecord::StatementInvalid => error
-      raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_association.call(relation, reflection, error) }
+      raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_association.call(relation, reflection, model, error) }
 
-      result = rescue_statement_invalid(relation, reflection, &block)
+      result = rescue_statement_invalid(relation: relation, reflection: reflection, model: model, &block)
       AdaptiveAlias.current_patches.each_value(&:mark_removable)
       return result
     end
