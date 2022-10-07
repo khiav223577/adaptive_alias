@@ -93,4 +93,119 @@ class StiUserAttributesTest < Minitest::Test
       end
     end
   end
+
+  def test_create
+    user = nil
+
+    assert_queries_and_rollback(lambda {
+      [
+        "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 1234)",
+        "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user.id} AND `taggings`.`taggable_type` = 'User'",
+      ]
+    }) do
+      user = Users::AgentUser.new(name: 'test', profile_id: 1234)
+      user.save!
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries_and_rollback(lambda {
+        [
+          "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 1234)",
+          "INSERT INTO `users` (`type`, `name`, `profile_id_new`) VALUES ('Users::AgentUser', 'test', 1234)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user.id} AND `taggings`.`taggable_type` = 'User'",
+        ]
+      }) do
+        user = Users::AgentUser.new(name: 'test', profile_id: 1234)
+        user.save!
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries_and_rollback(lambda {
+        [
+          "INSERT INTO `users` (`type`, `name`, `profile_id_new`) VALUES ('Users::AgentUser', 'test', 1234)",
+          "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 1234)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user.id} AND `taggings`.`taggable_type` = 'User'",
+        ]
+      }) do
+        user = Users::AgentUser.new(name: 'test', profile_id: 1234)
+        user.save!
+      end
+    end
+  end
+
+  def test_create_multi
+    user1 = nil
+    user2 = nil
+    user3 = nil
+    profile = Profile.find(1)
+
+    assert_queries_and_rollback(lambda {
+      [
+        "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 1234)",
+        "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user1.id} AND `taggings`.`taggable_type` = 'User'",
+        "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 1)",
+        "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user2.id} AND `taggings`.`taggable_type` = 'User'",
+        "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 2222)",
+        "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user3.id} AND `taggings`.`taggable_type` = 'User'",
+      ]
+    }) do
+      user1 = Users::AgentUser.new(name: 'test', profile_id: 1234)
+      user2 = Users::AgentUser.new(name: 'test', profile_id: profile.id)
+      user3 = Users::AgentUser.new(name: 'test', profile_id_new: 2222)
+      user1.save!
+      user2.save!
+      user3.save!
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries_and_rollback(lambda {
+        [
+          "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 1234)",
+          "INSERT INTO `users` (`type`, `name`, `profile_id_new`) VALUES ('Users::AgentUser', 'test', 1234)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user1.id} AND `taggings`.`taggable_type` = 'User'",
+          "INSERT INTO `users` (`type`, `name`, `profile_id_new`) VALUES ('Users::AgentUser', 'test', 1)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user2.id} AND `taggings`.`taggable_type` = 'User'",
+          "INSERT INTO `users` (`type`, `name`, `profile_id_new`) VALUES ('Users::AgentUser', 'test', 2222)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user3.id} AND `taggings`.`taggable_type` = 'User'",
+        ]
+      }) do
+        user1 = Users::AgentUser.new(name: 'test', profile_id: 1234)
+        user2 = Users::AgentUser.new(name: 'test', profile_id: profile.id)
+        user3 = Users::AgentUser.new(name: 'test', profile_id_new: 2222)
+        user1.save!
+        user2.save!
+        user3.save!
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries_and_rollback(lambda {
+        [
+          "INSERT INTO `users` (`type`, `name`, `profile_id_new`) VALUES ('Users::AgentUser', 'test', 1234)",
+          "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 1234)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user1.id} AND `taggings`.`taggable_type` = 'User'",
+          "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 1)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user2.id} AND `taggings`.`taggable_type` = 'User'",
+          "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 2222)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user3.id} AND `taggings`.`taggable_type` = 'User'",
+        ]
+      }) do
+        user1 = Users::AgentUser.new(name: 'test', profile_id: 1234)
+        user2 = Users::AgentUser.new(name: 'test', profile_id: profile.id)
+        user3 = Users::AgentUser.new(name: 'test', profile_id_new: 2222)
+        user1.save!
+        user2.save!
+        user3.save!
+      end
+    end
+  end
 end
