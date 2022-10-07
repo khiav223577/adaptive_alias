@@ -60,6 +60,7 @@ users = User.create!([
   { type: 'Users::AgentUser', name: 'Pepper', profile: Profile.new(id_number: 'C1234') },
   { type: 'Users::AgentUser', name: 'Hachu', profile: Profile.new(id_number: 'D1234') },
   { type: 'Users::IgnoreColumnUser', name: 'Akka', profile: Profile.new(id_number: 'E1234') },
+  { type: 'Users::IgnoreColumnUser', name: 'Amiya' },
 ])
 
 users[0].tag_list.add('awesome', 'slick')

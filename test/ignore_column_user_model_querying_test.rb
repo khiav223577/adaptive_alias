@@ -12,7 +12,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
     assert_queries([
       "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
     ]) do
-      assert_equal [5], Users::IgnoreColumnUser.limit(2).select(:profile_id).map(&:profile_id)
+      assert_equal [5, nil], Users::IgnoreColumnUser.limit(2).select(:profile_id).map(&:profile_id)
     end
 
     3.times do
@@ -23,7 +23,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
         "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
         "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [5], Users::IgnoreColumnUser.limit(2).select(:profile_id).map(&:profile_id)
+        assert_equal [5, nil], Users::IgnoreColumnUser.limit(2).select(:profile_id).map(&:profile_id)
       end
 
       # --------- rollback rename migration ---------
@@ -32,7 +32,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
         "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
         "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [5], Users::IgnoreColumnUser.limit(2).select(:profile_id).map(&:profile_id)
+        assert_equal [5, nil], Users::IgnoreColumnUser.limit(2).select(:profile_id).map(&:profile_id)
       end
     end
   end
@@ -41,7 +41,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
     assert_queries([
       "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
     ]) do
-      assert_equal [5], Users::IgnoreColumnUser.limit(2).select(:profile_id_new).map(&:profile_id_new)
+      assert_equal [5, nil], Users::IgnoreColumnUser.limit(2).select(:profile_id_new).map(&:profile_id_new)
     end
 
     3.times do
@@ -52,7 +52,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
         "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
         "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [5], Users::IgnoreColumnUser.limit(2).select(:profile_id_new).map(&:profile_id_new)
+        assert_equal [5, nil], Users::IgnoreColumnUser.limit(2).select(:profile_id_new).map(&:profile_id_new)
       end
 
       # --------- rollback rename migration ---------
@@ -61,7 +61,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
         "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
         "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [5], Users::IgnoreColumnUser.limit(2).select(:profile_id_new).map(&:profile_id_new)
+        assert_equal [5, nil], Users::IgnoreColumnUser.limit(2).select(:profile_id_new).map(&:profile_id_new)
       end
     end
   end
@@ -70,7 +70,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
     assert_queries([
       "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser'",
     ]) do
-      assert_equal [5], Users::IgnoreColumnUser.pluck(:profile_id).first(2)
+      assert_equal [5, nil], Users::IgnoreColumnUser.pluck(:profile_id).first(2)
     end
 
     3.times do
@@ -81,7 +81,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
         "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser'",
         "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser'",
       ]) do
-        assert_equal [5], Users::IgnoreColumnUser.pluck(:profile_id).first(2)
+        assert_equal [5, nil], Users::IgnoreColumnUser.pluck(:profile_id).first(2)
       end
 
       # --------- rollback rename migration ---------
@@ -90,7 +90,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
         "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser'",
         "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser'",
       ]) do
-        assert_equal [5], Users::IgnoreColumnUser.pluck(:profile_id).first(2)
+        assert_equal [5, nil], Users::IgnoreColumnUser.pluck(:profile_id).first(2)
       end
     end
   end
@@ -99,7 +99,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
     assert_queries([
       "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser'",
     ]) do
-      assert_equal [5], Users::IgnoreColumnUser.pluck(:profile_id_new).first(2)
+      assert_equal [5, nil], Users::IgnoreColumnUser.pluck(:profile_id_new).first(2)
     end
 
     3.times do
@@ -110,7 +110,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
         "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser'",
         "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser'",
       ]) do
-        assert_equal [5], Users::IgnoreColumnUser.pluck(:profile_id_new).first(2)
+        assert_equal [5, nil], Users::IgnoreColumnUser.pluck(:profile_id_new).first(2)
       end
 
       # --------- rollback rename migration ---------
@@ -119,7 +119,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
         "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser'",
         "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser'",
       ]) do
-        assert_equal [5], Users::IgnoreColumnUser.pluck(:profile_id_new).first(2)
+        assert_equal [5, nil], Users::IgnoreColumnUser.pluck(:profile_id_new).first(2)
       end
     end
   end
@@ -128,7 +128,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
     assert_queries([
       "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
     ]) do
-      assert_equal [5], Users::IgnoreColumnUser.limit(2).pluck(:profile_id)
+      assert_equal [5, nil], Users::IgnoreColumnUser.limit(2).pluck(:profile_id)
     end
 
     3.times do
@@ -139,7 +139,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
         "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
         "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [5], Users::IgnoreColumnUser.limit(2).pluck(:profile_id)
+        assert_equal [5, nil], Users::IgnoreColumnUser.limit(2).pluck(:profile_id)
       end
 
       # --------- rollback rename migration ---------
@@ -148,7 +148,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
         "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
         "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [5], Users::IgnoreColumnUser.limit(2).pluck(:profile_id)
+        assert_equal [5, nil], Users::IgnoreColumnUser.limit(2).pluck(:profile_id)
       end
     end
   end
@@ -157,7 +157,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
     assert_queries([
       "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
     ]) do
-      assert_equal [5], Users::IgnoreColumnUser.limit(2).pluck(:profile_id_new)
+      assert_equal [5, nil], Users::IgnoreColumnUser.limit(2).pluck(:profile_id_new)
     end
 
     3.times do
@@ -168,7 +168,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
         "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
         "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [5], Users::IgnoreColumnUser.limit(2).pluck(:profile_id_new)
+        assert_equal [5, nil], Users::IgnoreColumnUser.limit(2).pluck(:profile_id_new)
       end
 
       # --------- rollback rename migration ---------
@@ -177,7 +177,7 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
         "SELECT `users`.`profile_id_new` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
         "SELECT `users`.`profile_id` FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' LIMIT 2",
       ]) do
-        assert_equal [5], Users::IgnoreColumnUser.limit(2).pluck(:profile_id_new)
+        assert_equal [5, nil], Users::IgnoreColumnUser.limit(2).pluck(:profile_id_new)
       end
     end
   end

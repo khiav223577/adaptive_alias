@@ -63,7 +63,10 @@ module AdaptiveAlias
           next false if not patch.removable
           next false if patch.removed
           next false if klass.table_name != error_klass.table_name
-          next false if not expected_attribute_err_msgs.include?(error.message)
+
+          # Error highlight behavior in Ruby 3.1 pollutes the error message
+          error_msg = error.respond_to?(:original_message) ? error.original_message : error.message
+          next false if not expected_attribute_err_msgs.include?(error_msg)
 
           patch.remove!
           next true
@@ -88,7 +91,9 @@ module AdaptiveAlias
           next false if not patch.removable
           next false if patch.removed
 
-          ambiguous = expected_ambiguous_association_err_msgs.include?(error.message)
+          # Error highlight behavior in Ruby 3.1 pollutes the error message
+          error_msg = error.respond_to?(:original_message) ? error.original_message : error.message
+          ambiguous = expected_ambiguous_association_err_msgs.include?(error_msg)
 
           if ambiguous
             next false if relation and klass.table_name != relation.klass.table_name
@@ -97,16 +102,9 @@ module AdaptiveAlias
             next false if !relation and !reflection and !model
           end
 
-          next false if not expected_association_err_msgs.include?(error.message) and not ambiguous
+          next false if not expected_association_err_msgs.include?(error_msg) and not ambiguous
 
           patch.remove!
-
-          if model
-            attributes = model.instance_variable_get(:@attributes).instance_variable_get(:@attributes)
-            attributes.transform_keys! do |key|
-              key == current_column.to_s ? alias_column.to_s : key
-            end
-          end
 
           if relation
             relation.reset # reset @arel
