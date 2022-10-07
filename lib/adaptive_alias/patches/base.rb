@@ -101,13 +101,6 @@ module AdaptiveAlias
 
           patch.remove!
 
-          if model
-            attributes = model.instance_variable_get(:@attributes).instance_variable_get(:@attributes)
-            attributes.transform_keys! do |key|
-              key == current_column.to_s ? alias_column.to_s : key
-            end
-          end
-
           if relation
             relation.reset # reset @arel
 
