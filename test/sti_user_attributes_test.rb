@@ -142,6 +142,7 @@ class StiUserAttributesTest < Minitest::Test
     user1 = nil
     user2 = nil
     user3 = nil
+    user4 = nil
     profile = Profile.find(1)
 
     assert_queries_and_rollback(lambda {
@@ -150,16 +151,20 @@ class StiUserAttributesTest < Minitest::Test
         "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user1.id} AND `taggings`.`taggable_type` = 'User'",
         "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 1)",
         "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user2.id} AND `taggings`.`taggable_type` = 'User'",
-        "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 2222)",
+        "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 1)",
         "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user3.id} AND `taggings`.`taggable_type` = 'User'",
+        "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 2222)",
+        "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user4.id} AND `taggings`.`taggable_type` = 'User'",
       ]
     }) do
       user1 = Users::AgentUser.new(name: 'test', profile_id: 1234)
       user2 = Users::AgentUser.new(name: 'test', profile_id: profile.id)
-      user3 = Users::AgentUser.new(name: 'test', profile_id_new: 2222)
+      user3 = Users::AgentUser.new(name: 'test', profile: profile)
+      user4 = Users::AgentUser.new(name: 'test', profile_id_new: 2222)
       user1.save!
       user2.save!
       user3.save!
+      user4.save!
     end
 
     3.times do
@@ -173,16 +178,20 @@ class StiUserAttributesTest < Minitest::Test
           "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user1.id} AND `taggings`.`taggable_type` = 'User'",
           "INSERT INTO `users` (`type`, `name`, `profile_id_new`) VALUES ('Users::AgentUser', 'test', 1)",
           "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user2.id} AND `taggings`.`taggable_type` = 'User'",
-          "INSERT INTO `users` (`type`, `name`, `profile_id_new`) VALUES ('Users::AgentUser', 'test', 2222)",
+          "INSERT INTO `users` (`type`, `name`, `profile_id_new`) VALUES ('Users::AgentUser', 'test', 1)",
           "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user3.id} AND `taggings`.`taggable_type` = 'User'",
+          "INSERT INTO `users` (`type`, `name`, `profile_id_new`) VALUES ('Users::AgentUser', 'test', 2222)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user4.id} AND `taggings`.`taggable_type` = 'User'",
         ]
       }) do
         user1 = Users::AgentUser.new(name: 'test', profile_id: 1234)
         user2 = Users::AgentUser.new(name: 'test', profile_id: profile.id)
-        user3 = Users::AgentUser.new(name: 'test', profile_id_new: 2222)
+        user3 = Users::AgentUser.new(name: 'test', profile: profile)
+        user4 = Users::AgentUser.new(name: 'test', profile_id_new: 2222)
         user1.save!
         user2.save!
         user3.save!
+        user4.save!
       end
 
       # --------- rollback rename migration ---------
@@ -195,16 +204,20 @@ class StiUserAttributesTest < Minitest::Test
           "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user1.id} AND `taggings`.`taggable_type` = 'User'",
           "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 1)",
           "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user2.id} AND `taggings`.`taggable_type` = 'User'",
-          "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 2222)",
+          "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 1)",
           "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user3.id} AND `taggings`.`taggable_type` = 'User'",
+          "INSERT INTO `users` (`type`, `name`, `profile_id`) VALUES ('Users::AgentUser', 'test', 2222)",
+          "SELECT `taggings`.* FROM `taggings` WHERE `taggings`.`taggable_id` = #{user4.id} AND `taggings`.`taggable_type` = 'User'",
         ]
       }) do
         user1 = Users::AgentUser.new(name: 'test', profile_id: 1234)
         user2 = Users::AgentUser.new(name: 'test', profile_id: profile.id)
-        user3 = Users::AgentUser.new(name: 'test', profile_id_new: 2222)
+        user3 = Users::AgentUser.new(name: 'test', profile: profile)
+        user4 = Users::AgentUser.new(name: 'test', profile_id_new: 2222)
         user1.save!
         user2.save!
         user3.save!
+        user4.save!
       end
     end
   end
