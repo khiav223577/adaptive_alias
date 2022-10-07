@@ -1,5 +1,9 @@
 ## Change Log
 
+### [v1.1.1](https://github.com/khiav223577/adaptive_alias/compare/v1.1.0...v1.1.1) 2022/10/07
+- [#24](https://github.com/khiav223577/adaptive_alias/pull/24) [Fix] disappeared value when instantiating all and then create / update multiple models one by one (@khiav223577)
+- [#23](https://github.com/khiav223577/adaptive_alias/pull/23) [Enhance] No need to determine missing value manually (@khiav223577)
+
 ### [v1.1.0](https://github.com/khiav223577/adaptive_alias/compare/v1.0.0...v1.1.0) 2022/09/27
 - [#22](https://github.com/khiav223577/adaptive_alias/pull/22) [Fix] creation via autosave(belongs_to) association  (@khiav223577)
 
