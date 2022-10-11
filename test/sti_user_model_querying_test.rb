@@ -355,4 +355,149 @@ class StiUserModelQueryingTest < Minitest::Test
       end
     end
   end
+
+  def test_filter_and_count
+    assert_queries([
+      "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+    ]) do
+      assert_equal 1, Users::AgentUser.where(profile_id_new: 3).count
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3",
+      ]) do
+        assert_equal 1, Users::AgentUser.where(profile_id_new: 3).count
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3",
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+      ]) do
+        assert_equal 1, Users::AgentUser.where(profile_id_new: 3).count
+      end
+    end
+  end
+
+  def test_group_and_count
+    assert_queries([
+      "SELECT COUNT(*) AS count_all, `users`.`profile_id` AS users_profile_id FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id`",
+    ]) do
+      assert_equal({ 3 => 1 }, Users::AgentUser.where(id: 3).group(:profile_id_new).count)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT COUNT(*) AS count_all, `users`.`profile_id` AS users_profile_id FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id`",
+        "SELECT COUNT(*) AS count_all, `users`.`profile_id_new` AS users_profile_id_new FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id_new`",
+      ]) do
+        assert_equal({ 3 => 1 }, Users::AgentUser.where(id: 3).group(:profile_id_new).count)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        "SELECT COUNT(*) AS count_all, `users`.`profile_id_new` AS users_profile_id_new FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id_new`",
+        "SELECT COUNT(*) AS count_all, `users`.`profile_id` AS users_profile_id FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id`",
+      ]) do
+        assert_equal({ 3 => 1 }, Users::AgentUser.where(id: 3).group(:profile_id_new).count)
+      end
+    end
+  end
+
+  def test_filter_and_sum
+    assert_queries([
+      "SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+    ]) do
+      assert_equal 3, Users::AgentUser.where(profile_id_new: 3).sum(:id)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+        "SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3",
+      ]) do
+        assert_equal 3, Users::AgentUser.where(profile_id_new: 3).sum(:id)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        "SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3",
+        "SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+      ]) do
+        assert_equal 3, Users::AgentUser.where(profile_id_new: 3).sum(:id)
+      end
+    end
+  end
+
+  def test_sum_alias_column
+    assert_queries([
+      "SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3",
+    ]) do
+      assert_equal 3, Users::AgentUser.where(id: 3).sum(:profile_id_new)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3",
+        "SELECT SUM(`users`.`profile_id_new`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3",
+      ]) do
+        assert_equal 3, Users::AgentUser.where(id: 3).sum(:profile_id_new)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        "SELECT SUM(`users`.`profile_id_new`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3",
+        "SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3",
+      ]) do
+        assert_equal 3, Users::AgentUser.where(id: 3).sum(:profile_id_new)
+      end
+    end
+  end
+
+  def test_filter_and_sum_alias_column
+    assert_queries([
+      "SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+    ]) do
+      assert_equal 3, Users::AgentUser.where(profile_id_new: 3).sum(:profile_id_new)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+        "SELECT SUM(`users`.`profile_id_new`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3",
+      ]) do
+        assert_equal 3, Users::AgentUser.where(profile_id_new: 3).sum(:profile_id_new)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        "SELECT SUM(`users`.`profile_id_new`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3",
+        "SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+      ]) do
+        assert_equal 3, Users::AgentUser.where(profile_id_new: 3).sum(:profile_id_new)
+      end
+    end
+  end
 end

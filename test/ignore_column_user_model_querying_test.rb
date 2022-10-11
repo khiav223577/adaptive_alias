@@ -355,4 +355,149 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
       end
     end
   end
+
+  def test_filter_and_count
+    assert_queries([
+      "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5",
+    ]) do
+      assert_equal 1, Users::IgnoreColumnUser.where(profile_id_new: 5).count
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5",
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id_new` = 5",
+      ]) do
+        assert_equal 1, Users::IgnoreColumnUser.where(profile_id_new: 5).count
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id_new` = 5",
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5",
+      ]) do
+        assert_equal 1, Users::IgnoreColumnUser.where(profile_id_new: 5).count
+      end
+    end
+  end
+
+  def test_group_and_count
+    assert_queries([
+      "SELECT COUNT(*) AS count_all, `users`.`profile_id` AS users_profile_id FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`id` = 5 GROUP BY `users`.`profile_id`",
+    ]) do
+      assert_equal({ 5 => 1 }, Users::IgnoreColumnUser.where(id: 5).group(:profile_id_new).count)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT COUNT(*) AS count_all, `users`.`profile_id` AS users_profile_id FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`id` = 5 GROUP BY `users`.`profile_id`",
+        "SELECT COUNT(*) AS count_all, `users`.`profile_id_new` AS users_profile_id_new FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`id` = 5 GROUP BY `users`.`profile_id_new`",
+      ]) do
+        assert_equal({ 5 => 1 }, Users::IgnoreColumnUser.where(id: 5).group(:profile_id_new).count)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        "SELECT COUNT(*) AS count_all, `users`.`profile_id_new` AS users_profile_id_new FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`id` = 5 GROUP BY `users`.`profile_id_new`",
+        "SELECT COUNT(*) AS count_all, `users`.`profile_id` AS users_profile_id FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`id` = 5 GROUP BY `users`.`profile_id`",
+      ]) do
+        assert_equal({ 5 => 1 }, Users::IgnoreColumnUser.where(id: 5).group(:profile_id_new).count)
+      end
+    end
+  end
+
+  def test_filter_and_sum
+    assert_queries([
+      "SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5",
+    ]) do
+      assert_equal 5, Users::IgnoreColumnUser.where(profile_id_new: 5).sum(:id)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5",
+        "SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id_new` = 5",
+      ]) do
+        assert_equal 5, Users::IgnoreColumnUser.where(profile_id_new: 5).sum(:id)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        "SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id_new` = 5",
+        "SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5",
+      ]) do
+        assert_equal 5, Users::IgnoreColumnUser.where(profile_id_new: 5).sum(:id)
+      end
+    end
+  end
+
+  def test_sum_alias_column
+    assert_queries([
+      "SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`id` = 5",
+    ]) do
+      assert_equal 5, Users::IgnoreColumnUser.where(id: 5).sum(:profile_id_new)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`id` = 5",
+        "SELECT SUM(`users`.`profile_id_new`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`id` = 5",
+      ]) do
+        assert_equal 5, Users::IgnoreColumnUser.where(id: 5).sum(:profile_id_new)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        "SELECT SUM(`users`.`profile_id_new`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`id` = 5",
+        "SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`id` = 5",
+      ]) do
+        assert_equal 5, Users::IgnoreColumnUser.where(id: 5).sum(:profile_id_new)
+      end
+    end
+  end
+
+  def test_filter_and_sum_alias_column
+    assert_queries([
+      "SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5",
+    ]) do
+      assert_equal 5, Users::IgnoreColumnUser.where(profile_id_new: 5).sum(:profile_id_new)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5",
+        "SELECT SUM(`users`.`profile_id_new`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id_new` = 5",
+      ]) do
+        assert_equal 5, Users::IgnoreColumnUser.where(profile_id_new: 5).sum(:profile_id_new)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        "SELECT SUM(`users`.`profile_id_new`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id_new` = 5",
+        "SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5",
+      ]) do
+        assert_equal 5, Users::IgnoreColumnUser.where(profile_id_new: 5).sum(:profile_id_new)
+      end
+    end
+  end
 end
