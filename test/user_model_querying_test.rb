@@ -355,4 +355,149 @@ class UserModelQueryingTest < Minitest::Test
       end
     end
   end
+
+  def test_filter_and_count
+    assert_queries([
+      'SELECT COUNT(*) FROM `users` WHERE `users`.`profile_id` = 1',
+    ]) do
+      assert_equal 1, User.where(profile_id_new: 1).count
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        'SELECT COUNT(*) FROM `users` WHERE `users`.`profile_id` = 1',
+        'SELECT COUNT(*) FROM `users` WHERE `users`.`profile_id_new` = 1',
+      ]) do
+        assert_equal 1, User.where(profile_id_new: 1).count
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        'SELECT COUNT(*) FROM `users` WHERE `users`.`profile_id_new` = 1',
+        'SELECT COUNT(*) FROM `users` WHERE `users`.`profile_id` = 1',
+      ]) do
+        assert_equal 1, User.where(profile_id_new: 1).count
+      end
+    end
+  end
+
+  def test_group_and_count
+    assert_queries([
+      "SELECT COUNT(*) AS #{alias_name_wrapping('count_all')}, `users`.`profile_id` AS #{alias_name_wrapping('users_profile_id')} FROM `users` WHERE `users`.`id` = 1 GROUP BY `users`.`profile_id`",
+    ]) do
+      assert_equal({ 1 => 1 }, User.where(id: 1).group(:profile_id_new).count)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT COUNT(*) AS #{alias_name_wrapping('count_all')}, `users`.`profile_id` AS #{alias_name_wrapping('users_profile_id')} FROM `users` WHERE `users`.`id` = 1 GROUP BY `users`.`profile_id`",
+        "SELECT COUNT(*) AS #{alias_name_wrapping('count_all')}, `users`.`profile_id_new` AS #{alias_name_wrapping('users_profile_id_new')} FROM `users` WHERE `users`.`id` = 1 GROUP BY `users`.`profile_id_new`",
+      ]) do
+        assert_equal({ 1 => 1 }, User.where(id: 1).group(:profile_id_new).count)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        "SELECT COUNT(*) AS #{alias_name_wrapping('count_all')}, `users`.`profile_id_new` AS #{alias_name_wrapping('users_profile_id_new')} FROM `users` WHERE `users`.`id` = 1 GROUP BY `users`.`profile_id_new`",
+        "SELECT COUNT(*) AS #{alias_name_wrapping('count_all')}, `users`.`profile_id` AS #{alias_name_wrapping('users_profile_id')} FROM `users` WHERE `users`.`id` = 1 GROUP BY `users`.`profile_id`",
+      ]) do
+        assert_equal({ 1 => 1 }, User.where(id: 1).group(:profile_id_new).count)
+      end
+    end
+  end
+
+  def test_filter_and_sum
+    assert_queries([
+      'SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`profile_id` = 1',
+    ]) do
+      assert_equal 1, User.where(profile_id_new: 1).sum(:id)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        'SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`profile_id` = 1',
+        'SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`profile_id_new` = 1',
+      ]) do
+        assert_equal 1, User.where(profile_id_new: 1).sum(:id)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        'SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`profile_id_new` = 1',
+        'SELECT SUM(`users`.`id`) FROM `users` WHERE `users`.`profile_id` = 1',
+      ]) do
+        assert_equal 1, User.where(profile_id_new: 1).sum(:id)
+      end
+    end
+  end
+
+  def test_sum_alias_column
+    assert_queries([
+      'SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`id` = 1',
+    ]) do
+      assert_equal 1, User.where(id: 1).sum(:profile_id_new)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        'SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`id` = 1',
+        'SELECT SUM(`users`.`profile_id_new`) FROM `users` WHERE `users`.`id` = 1',
+      ]) do
+        assert_equal 1, User.where(id: 1).sum(:profile_id_new)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        'SELECT SUM(`users`.`profile_id_new`) FROM `users` WHERE `users`.`id` = 1',
+        'SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`id` = 1',
+      ]) do
+        assert_equal 1, User.where(id: 1).sum(:profile_id_new)
+      end
+    end
+  end
+
+  def test_filter_and_sum_alias_column
+    assert_queries([
+      'SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`profile_id` = 1',
+    ]) do
+      assert_equal 1, User.where(profile_id_new: 1).sum(:profile_id_new)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        'SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`profile_id` = 1',
+        'SELECT SUM(`users`.`profile_id_new`) FROM `users` WHERE `users`.`profile_id_new` = 1',
+      ]) do
+        assert_equal 1, User.where(profile_id_new: 1).sum(:profile_id_new)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+      assert_queries([
+        'SELECT SUM(`users`.`profile_id_new`) FROM `users` WHERE `users`.`profile_id_new` = 1',
+        'SELECT SUM(`users`.`profile_id`) FROM `users` WHERE `users`.`profile_id` = 1',
+      ]) do
+        assert_equal 1, User.where(profile_id_new: 1).sum(:profile_id_new)
+      end
+    end
+  end
 end
