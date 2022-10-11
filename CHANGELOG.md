@@ -1,5 +1,8 @@
 ## Change Log
 
+### [v1.1.2](https://github.com/khiav223577/adaptive_alias/compare/v1.1.1...v1.1.2) 2022/10/11
+- [#25](https://github.com/khiav223577/adaptive_alias/pull/25) [Fix] Deal with count, sum, and group (@khiav223577)
+
 ### [v1.1.1](https://github.com/khiav223577/adaptive_alias/compare/v1.1.0...v1.1.1) 2022/10/07
 - [#24](https://github.com/khiav223577/adaptive_alias/pull/24) [Fix] Disappeared value when instantiating all and then create / update multiple models one by one (@khiav223577)
 - [#23](https://github.com/khiav223577/adaptive_alias/pull/23) [Enhance] No need to determine missing value manually (@khiav223577)
