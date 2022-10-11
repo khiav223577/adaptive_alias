@@ -387,7 +387,7 @@ class StiUserModelQueryingTest < Minitest::Test
 
   def test_group_and_count
     assert_queries([
-      "SELECT COUNT(*) AS count_all, `users`.`profile_id` AS users_profile_id FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id`",
+      "SELECT COUNT(*) AS #{alias_name_wrapping('count_all')}, `users`.`profile_id` AS #{alias_name_wrapping('users_profile_id')} FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id`",
     ]) do
       assert_equal({ 3 => 1 }, Users::AgentUser.where(id: 3).group(:profile_id_new).count)
     end
@@ -397,8 +397,8 @@ class StiUserModelQueryingTest < Minitest::Test
       User.connection.rename_column :users, :profile_id, :profile_id_new
 
       assert_queries([
-        "SELECT COUNT(*) AS count_all, `users`.`profile_id` AS users_profile_id FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id`",
-        "SELECT COUNT(*) AS count_all, `users`.`profile_id_new` AS users_profile_id_new FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id_new`",
+        "SELECT COUNT(*) AS #{alias_name_wrapping('count_all')}, `users`.`profile_id` AS #{alias_name_wrapping('users_profile_id')} FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id`",
+        "SELECT COUNT(*) AS #{alias_name_wrapping('count_all')}, `users`.`profile_id_new` AS #{alias_name_wrapping('users_profile_id_new')} FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id_new`",
       ]) do
         assert_equal({ 3 => 1 }, Users::AgentUser.where(id: 3).group(:profile_id_new).count)
       end
@@ -406,8 +406,8 @@ class StiUserModelQueryingTest < Minitest::Test
       # --------- rollback rename migration ---------
       User.connection.rename_column :users, :profile_id_new, :profile_id
       assert_queries([
-        "SELECT COUNT(*) AS count_all, `users`.`profile_id_new` AS users_profile_id_new FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id_new`",
-        "SELECT COUNT(*) AS count_all, `users`.`profile_id` AS users_profile_id FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id`",
+        "SELECT COUNT(*) AS #{alias_name_wrapping('count_all')}, `users`.`profile_id_new` AS #{alias_name_wrapping('users_profile_id_new')} FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id_new`",
+        "SELECT COUNT(*) AS #{alias_name_wrapping('count_all')}, `users`.`profile_id` AS #{alias_name_wrapping('users_profile_id')} FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`id` = 3 GROUP BY `users`.`profile_id`",
       ]) do
         assert_equal({ 3 => 1 }, Users::AgentUser.where(id: 3).group(:profile_id_new).count)
       end

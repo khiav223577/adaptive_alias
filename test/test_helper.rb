@@ -40,6 +40,12 @@ ensure
   ActiveSupport::Notifications.unsubscribe(subscriber)
 end
 
+# aliased column name is changed in Rails 7.0
+def alias_name_wrapping(column_name)
+  return column_name if Gem::Version.new(ActiveRecord::VERSION::STRING) < Gem::Version.new('7.0.0')
+  return "`#{column_name}`"
+end
+
 def with_rollback
   ActiveRecord::Base.transaction do
     yield
