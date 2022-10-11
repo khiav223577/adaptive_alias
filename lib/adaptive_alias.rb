@@ -15,6 +15,7 @@ require 'adaptive_alias/hooks/singular_association'
 require 'adaptive_alias/hooks/relation'
 require 'adaptive_alias/hooks/active_record_core'
 require 'adaptive_alias/hooks/active_record_persistence'
+require 'adaptive_alias/hooks/calculations'
 
 module AdaptiveAlias
   @log_interval = 10 * 60
