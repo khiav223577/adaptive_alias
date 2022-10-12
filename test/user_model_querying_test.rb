@@ -500,4 +500,34 @@ class UserModelQueryingTest < Minitest::Test
       end
     end
   end
+
+  def test_or_query
+    assert_queries([
+      'SELECT COUNT(*) FROM `users` WHERE (`users`.`profile_id` = 1 OR `users`.`profile_id` = 2)',
+    ]) do
+      assert_equal 2, User.where(profile_id_new: 1).or(User.where(profile_id: 2)).count
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        'SELECT COUNT(*) FROM `users` WHERE (`users`.`profile_id` = 1 OR `users`.`profile_id` = 2)',
+        'SELECT COUNT(*) FROM `users` WHERE (`users`.`profile_id_new` = 1 OR `users`.`profile_id_new` = 2)',
+      ]) do
+        assert_equal 2, User.where(profile_id_new: 1).or(User.where(profile_id: 2)).count
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        'SELECT COUNT(*) FROM `users` WHERE (`users`.`profile_id_new` = 1 OR `users`.`profile_id_new` = 2)',
+        'SELECT COUNT(*) FROM `users` WHERE (`users`.`profile_id` = 1 OR `users`.`profile_id` = 2)',
+      ]) do
+        assert_equal 2, User.where(profile_id_new: 1).or(User.where(profile_id: 2)).count
+      end
+    end
+  end
 end

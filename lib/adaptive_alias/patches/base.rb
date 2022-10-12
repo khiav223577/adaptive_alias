@@ -155,10 +155,14 @@ module AdaptiveAlias
       def each_nodes(nodes, &block)
         nodes.each do |node|
           case node
+          when Arel::Nodes::Grouping
+            each_nodes([node.expr], &block)
           when Arel::Nodes::Equality
             yield(node)
           when Arel::Nodes::And
             each_nodes(node.children, &block)
+          when Arel::Nodes::Or
+            each_nodes([node.left, node.right], &block)
           end
         end
       end
