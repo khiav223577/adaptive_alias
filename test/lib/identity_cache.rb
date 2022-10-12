@@ -16,6 +16,10 @@ class MockedCacheStore
   def write(key, value)
     @cache[key] = value
   end
+
+  def clear
+    @cache.clear
+  end
 end
 
 IdentityCache.cache_backend = MockedCacheStore.new
