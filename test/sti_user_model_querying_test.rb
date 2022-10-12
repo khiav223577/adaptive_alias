@@ -500,4 +500,34 @@ class StiUserModelQueryingTest < Minitest::Test
       end
     end
   end
+
+  def test_or_query
+    assert_queries([
+      "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND (`users`.`profile_id` = 3 OR `users`.`profile_id` = 4)",
+    ]) do
+      assert_equal 2, Users::AgentUser.where(profile_id_new: 3).or(Users::AgentUser.where(profile_id: 4)).count
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND (`users`.`profile_id` = 3 OR `users`.`profile_id` = 4)",
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND (`users`.`profile_id_new` = 3 OR `users`.`profile_id_new` = 4)",
+      ]) do
+        assert_equal 2, Users::AgentUser.where(profile_id_new: 3).or(Users::AgentUser.where(profile_id: 4)).count
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND (`users`.`profile_id_new` = 3 OR `users`.`profile_id_new` = 4)",
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND (`users`.`profile_id` = 3 OR `users`.`profile_id` = 4)",
+      ]) do
+        assert_equal 2, Users::AgentUser.where(profile_id_new: 3).or(Users::AgentUser.where(profile_id: 4)).count
+      end
+    end
+  end
 end

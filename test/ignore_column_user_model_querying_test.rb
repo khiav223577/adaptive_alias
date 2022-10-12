@@ -500,4 +500,34 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
       end
     end
   end
+
+  def test_or_query
+    assert_queries([
+      "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND (`users`.`profile_id` = 5 OR `users`.`profile_id` IS NULL)",
+    ]) do
+      assert_equal 2, Users::IgnoreColumnUser.where(profile_id_new: 5).or(Users::IgnoreColumnUser.where(profile_id: nil)).count
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND (`users`.`profile_id` = 5 OR `users`.`profile_id` IS NULL)",
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND (`users`.`profile_id_new` = 5 OR `users`.`profile_id_new` IS NULL)",
+      ]) do
+        assert_equal 2, Users::IgnoreColumnUser.where(profile_id_new: 5).or(Users::IgnoreColumnUser.where(profile_id: nil)).count
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND (`users`.`profile_id_new` = 5 OR `users`.`profile_id_new` IS NULL)",
+        "SELECT COUNT(*) FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND (`users`.`profile_id` = 5 OR `users`.`profile_id` IS NULL)",
+      ]) do
+        assert_equal 2, Users::IgnoreColumnUser.where(profile_id_new: 5).or(Users::IgnoreColumnUser.where(profile_id: nil)).count
+      end
+    end
+  end
 end
