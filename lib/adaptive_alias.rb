@@ -45,11 +45,12 @@ module AdaptiveAlias
     def rescue_statement_invalid(relation: nil, reflection: nil, model: nil, &block)
       yield
     rescue ActiveRecord::StatementInvalid => error
-      raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_association.call(relation, reflection, model, error) }
+      _key, patch = AdaptiveAlias.current_patches.find{|_key, patch| patch.check_matched.call(relation, reflection, model, error) }
+      raise error if patch == nil
 
-      result = rescue_statement_invalid(relation: relation, reflection: reflection, model: model, &block)
-      AdaptiveAlias.current_patches.each_value(&:mark_removable)
-      return result
+      patch.remove_and_fix_association.call(relation, reflection) do
+        return rescue_statement_invalid(relation: relation, reflection: reflection, model: model, &block)
+      end
     end
 
     def get_or_create_model_module(klass)
