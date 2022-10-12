@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 class User < ActiveRecord::Base
   include AdaptiveAlias[:profile_id, :profile_id_new]
+  include IdentityCache
+
+  cache_index :name, unique: true
 
   has_many :posts
   has_many :agent_posts, class_name: 'Posts::AgentPost'
