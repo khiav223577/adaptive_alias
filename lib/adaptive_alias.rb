@@ -10,8 +10,6 @@ require 'adaptive_alias/patches/backward_patch'
 require 'adaptive_alias/patches/forward_patch'
 
 require 'adaptive_alias/hooks/association'
-require 'adaptive_alias/hooks/association_scope'
-require 'adaptive_alias/hooks/singular_association'
 require 'adaptive_alias/hooks/relation'
 require 'adaptive_alias/hooks/active_record_core'
 require 'adaptive_alias/hooks/active_record_persistence'
@@ -50,16 +48,6 @@ module AdaptiveAlias
       raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_association.call(relation, reflection, model, error) }
 
       result = rescue_statement_invalid(relation: relation, reflection: reflection, model: model, &block)
-      AdaptiveAlias.current_patches.each_value(&:mark_removable)
-      return result
-    end
-
-    def rescue_missing_attribute(klass, &block)
-      yield
-    rescue ActiveModel::MissingAttributeError => error
-      raise error if AdaptiveAlias.current_patches.all?{|_key, patch| !patch.fix_missing_attribute.call(klass, error) }
-
-      result = rescue_missing_attribute(klass, &block)
       AdaptiveAlias.current_patches.each_value(&:mark_removable)
       return result
     end

@@ -12,13 +12,13 @@ class ColumnNamesTest < Minitest::Test
       # --------- do rename migration ---------
       Article.connection.rename_column :articles, :user_id, :user_id_abc
       assert_equal %w[id user_id title active], Article.column_names
-      Article.last.user_id
+      Article.pick(:user_id)
       assert_equal %w[id user_id_abc title active], Article.column_names
 
       # --------- rollback rename migration ---------
       Article.connection.rename_column :articles, :user_id_abc, :user_id
       assert_equal %w[id user_id_abc title active], Article.column_names
-      Article.last.user_id_abc
+      Article.pick(:user_id_abc)
       assert_equal %w[id user_id title active], Article.column_names
     end
   end
@@ -30,13 +30,13 @@ class ColumnNamesTest < Minitest::Test
       # --------- do rename migration ---------
       Article.connection.rename_column :articles, :user_id, :user_id_abc
       assert_equal %w[id user_id title active], Article.attribute_names
-      Article.last.user_id
+      Article.pick(:user_id)
       assert_equal %w[id user_id_abc title active], Article.attribute_names
 
       # --------- rollback rename migration ---------
       Article.connection.rename_column :articles, :user_id_abc, :user_id
       assert_equal %w[id user_id_abc title active], Article.attribute_names
-      Article.last.user_id_abc
+      Article.pick(:user_id_abc)
       assert_equal %w[id user_id title active], Article.attribute_names
     end
   end
@@ -52,6 +52,24 @@ class ColumnNamesTest < Minitest::Test
       # --------- rollback rename migration ---------
       Article.connection.rename_column :articles, :user_id_abc, :user_id
       assert_equal %w[id user_id title active], Article.last.attribute_names
+    end
+  end
+
+  def test_attribute_aliases
+    assert_equal %w[id user_id title active], Article.attribute_names
+
+    3.times do
+      # --------- do rename migration ---------
+      Article.connection.rename_column :articles, :user_id, :user_id_abc
+      assert_equal({ 'user_id_abc' => 'user_id' }, Article.attribute_aliases)
+      Article.pick(:user_id)
+      assert_equal({ 'user_id' => 'user_id_abc' }, Article.attribute_aliases)
+
+      # --------- rollback rename migration ---------
+      Article.connection.rename_column :articles, :user_id_abc, :user_id
+      assert_equal({ 'user_id' => 'user_id_abc' }, Article.attribute_aliases)
+      Article.pick(:user_id_abc)
+      assert_equal({ 'user_id_abc' => 'user_id' }, Article.attribute_aliases)
     end
   end
 end

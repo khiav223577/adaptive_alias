@@ -4,7 +4,6 @@ module AdaptiveAlias
   module Patches
     class Base
       attr_reader :fix_association
-      attr_reader :fix_missing_attribute
       attr_reader :removed
       attr_reader :removable
 
@@ -23,24 +22,24 @@ module AdaptiveAlias
         AdaptiveAlias.get_or_create_model_module(klass).instance_exec do
           remove_method(new_column) if method_defined?(new_column)
           define_method(new_column) do
-            AdaptiveAlias.rescue_missing_attribute(klass){ self[new_column] }
+            self[new_column]
           end
 
           remove_method("#{new_column}=") if method_defined?("#{new_column}=")
           define_method("#{new_column}=") do |*args|
-            AdaptiveAlias.rescue_missing_attribute(klass){ super(*args) }
+            super(*args)
           end
 
           remove_method(old_column) if method_defined?(old_column)
           define_method(old_column) do
             patch.log_warning if log_warning
-            AdaptiveAlias.rescue_missing_attribute(klass){ self[old_column] }
+            self[old_column]
           end
 
           remove_method("#{old_column}=") if method_defined?("#{old_column}=")
           define_method("#{old_column}=") do |*args|
             patch.log_warning if log_warning
-            AdaptiveAlias.rescue_missing_attribute(klass){ super(*args) }
+            super(*args)
           end
         end
 
@@ -53,24 +52,6 @@ module AdaptiveAlias
         expected_ambiguous_association_err_msgs = [
           "Mysql2::Error: Unknown column '#{current_column}' in 'field list'".freeze,
         ].freeze
-
-        expected_attribute_err_msgs = [
-          "can't write unknown attribute `#{current_column}`".freeze,
-          "missing attribute: #{current_column}".freeze,
-        ].freeze
-
-        @fix_missing_attribute = proc do |error_klass, error|
-          next false if not patch.removable
-          next false if patch.removed
-          next false if klass.table_name != error_klass.table_name
-
-          # Error highlight behavior in Ruby 3.1 pollutes the error message
-          error_msg = error.respond_to?(:original_message) ? error.original_message : error.message
-          next false if not expected_attribute_err_msgs.include?(error_msg)
-
-          patch.remove!
-          next true
-        end
 
         fix_arel_attributes = proc do |attr|
           next if not attr.is_a?(Arel::Attributes::Attribute)
@@ -141,7 +122,6 @@ module AdaptiveAlias
         end
 
         @fix_association = nil
-        @fix_missing_attribute = nil
       end
 
       def mark_removable
