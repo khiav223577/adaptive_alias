@@ -29,6 +29,8 @@ This is what this gem wants to achieve. We don't want to do complex migrations, 
 Just rely on this gem.
 
 
+Note that it is not thread-safe when swapping patches, please make sure there is no multi-thread during migration.
+
 ## Supports
 - Ruby 2.6 ~ 2.7, 3.0 ~ 3.1
 - Rails 6.0, 6.1, 7.0
