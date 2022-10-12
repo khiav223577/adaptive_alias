@@ -25,7 +25,7 @@ We need a way to automatically adjust the patch to adapt current schema.
                           
 ```
 
-This is what this gem wants to achieve. We don't want to do complex migrations, take care of backward-compatibiliy, and have any downtime.
+This is what this gem wants to achieve. We don't want to do complex migrations, take care of backward-compatibility, and have any downtime.
 Just rely on this gem.
 
 
