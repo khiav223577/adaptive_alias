@@ -11,7 +11,7 @@ module AdaptiveAlias
         add_hooks!(current_column: @old_column, alias_column: @new_column)
       end
 
-      def remove!
+      def do_remove!
         super
         @klass.remove_alias_attribute(@new_column)
         @klass.define_attribute_method(@new_column)

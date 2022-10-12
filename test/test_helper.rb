@@ -73,5 +73,5 @@ def restore_original_db_schema!(klass, old_column, new_column, forward = true)
   patch = AdaptiveAlias.current_patches[key]
 
   expected_patch_klass = forward ? AdaptiveAlias::Patches::ForwardPatch : AdaptiveAlias::Patches::BackwardPatch
-  patch.remove!.mark_removable if not patch.is_a?(expected_patch_klass)
+  patch.remove! if not patch.is_a?(expected_patch_klass)
 end

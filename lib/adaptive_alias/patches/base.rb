@@ -3,7 +3,8 @@
 module AdaptiveAlias
   module Patches
     class Base
-      attr_reader :fix_association
+      attr_reader :check_matched
+      attr_reader :remove_and_fix_association
       attr_reader :removed
       attr_reader :removable
 
@@ -68,9 +69,8 @@ module AdaptiveAlias
           end
         end
 
-        @fix_association = proc do |relation, reflection, model, error|
+        @check_matched = proc do |relation, reflection, model, error|
           next false if not patch.removable
-          next false if patch.removed
 
           # Error highlight behavior in Ruby 3.1 pollutes the error message
           error_msg = error.respond_to?(:original_message) ? error.original_message : error.message
@@ -84,25 +84,28 @@ module AdaptiveAlias
           end
 
           next false if not expected_association_err_msgs.include?(error_msg) and not ambiguous
-
-          patch.remove!
-
-          if relation
-            relation.reset # reset @arel
-
-            joins = relation.arel.source.right # @ctx.source.right << create_join(relation, nil, klass)
-
-            # adjust select fields
-            index = relation.select_values.index(current_column)
-            relation.select_values[index] = alias_column if index
-
-            fix_arel_nodes.call(joins.map{|s| s.right.expr })
-            fix_arel_nodes.call(relation.where_clause.send(:predicates))
-          end
-
-          reflection.clear_association_scope_cache if reflection
-
           next true
+        end
+
+        @remove_and_fix_association = proc do |relation, reflection, &block|
+          patch.remove! do
+            if relation
+              relation.reset # reset @arel
+
+              joins = relation.arel.source.right # @ctx.source.right << create_join(relation, nil, klass)
+
+              # adjust select fields
+              index = relation.select_values.index(current_column)
+              relation.select_values[index] = alias_column if index
+
+              fix_arel_nodes.call(joins.map{|s| s.right.expr })
+              fix_arel_nodes.call(relation.where_clause.send(:predicates))
+            end
+
+            reflection.clear_association_scope_cache if reflection
+
+            block.call
+          end
         end
       end
 
@@ -114,14 +117,24 @@ module AdaptiveAlias
       end
 
       def remove!
-        @removed = true
+        if not @removed
+          @removed = true
+          new_patch = do_remove!
+        end
 
+        yield if block_given?
+      ensure
+        new_patch.mark_removable if new_patch
+      end
+
+      def do_remove!
         reset_caches(@klass)
         ActiveRecord::Base.descendants.each do |model_klass|
           reset_caches(model_klass) if model_klass.table_name == @klass.table_name
         end
 
-        @fix_association = nil
+        @check_matched = nil
+        @remove_and_fix_association = nil
       end
 
       def mark_removable
