@@ -1,5 +1,10 @@
 ## Change Log
 
+### [v1.2.0](https://github.com/khiav223577/adaptive_alias/compare/v1.1.2...v1.2.0) 2022/10/12
+- [#28](https://github.com/khiav223577/adaptive_alias/pull/28) [Fix] Deal with OR-query (@khiav223577)
+- [#27](https://github.com/khiav223577/adaptive_alias/pull/27) [Enhance] make sure `mark_removable` will be called when manually remove patch (@khiav223577)
+- [#26](https://github.com/khiav223577/adaptive_alias/pull/26) [Fix] Deal with old attribute sets come from cache (identity_cache) (@khiav223577)
+
 ### [v1.1.2](https://github.com/khiav223577/adaptive_alias/compare/v1.1.1...v1.1.2) 2022/10/11
 - [#25](https://github.com/khiav223577/adaptive_alias/pull/25) [Fix] Deal with count, sum, and group (@khiav223577)
 
