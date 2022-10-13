@@ -1,5 +1,10 @@
 ## Change Log
 
+### [v1.2.1](https://github.com/khiav223577/adaptive_alias/compare/v1.2.0...v1.2.1) 2022/10/13
+- [#31](https://github.com/khiav223577/adaptive_alias/pull/31) [Fix] Deal with `exists?` (@khiav223577)
+- [#30](https://github.com/khiav223577/adaptive_alias/pull/30) [Test] Add test cases to test raw sql query (@khiav223577)
+- [#29](https://github.com/khiav223577/adaptive_alias/pull/29) [Fix] Rescue queries fired by `update_all` (@khiav223577)
+
 ### [v1.2.0](https://github.com/khiav223577/adaptive_alias/compare/v1.1.2...v1.2.0) 2022/10/12
 - [#28](https://github.com/khiav223577/adaptive_alias/pull/28) [Fix] Deal with OR-query (@khiav223577)
 - [#27](https://github.com/khiav223577/adaptive_alias/pull/27) [Enhance] make sure `mark_removable` will be called when manually remove patch (@khiav223577)
