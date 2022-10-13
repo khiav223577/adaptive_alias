@@ -9,6 +9,10 @@ module AdaptiveAlias
         AdaptiveAlias.rescue_statement_invalid(relation: self){ super }
       end
 
+      def exists?(*)
+        AdaptiveAlias.rescue_statement_invalid(relation: self){ super }
+      end
+
       def select_all(*)
         AdaptiveAlias.rescue_statement_invalid(relation: self){ super }
       end
