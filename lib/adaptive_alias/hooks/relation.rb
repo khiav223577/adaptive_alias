@@ -5,6 +5,10 @@ module AdaptiveAlias
         AdaptiveAlias.rescue_statement_invalid(relation: self){ super }
       end
 
+      def update_all(*)
+        AdaptiveAlias.rescue_statement_invalid(relation: self){ super }
+      end
+
       def select_all(*)
         AdaptiveAlias.rescue_statement_invalid(relation: self){ super }
       end
