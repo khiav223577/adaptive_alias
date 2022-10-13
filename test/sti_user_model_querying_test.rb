@@ -530,4 +530,64 @@ class StiUserModelQueryingTest < Minitest::Test
       end
     end
   end
+
+  def test_filter_and_update_all
+    assert_queries_and_rollback([
+      "UPDATE `users` SET `users`.`name` = 'new name' WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+    ]) do
+      assert_equal 1, Users::AgentUser.where(profile_id_new: 3).update_all(name: 'new name')
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries_and_rollback([
+        "UPDATE `users` SET `users`.`name` = 'new name' WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+        "UPDATE `users` SET `users`.`name` = 'new name' WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3",
+      ]) do
+        assert_equal 1, Users::AgentUser.where(profile_id_new: 3).update_all(name: 'new name')
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries_and_rollback([
+        "UPDATE `users` SET `users`.`name` = 'new name' WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3",
+        "UPDATE `users` SET `users`.`name` = 'new name' WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+      ]) do
+        assert_equal 1, Users::AgentUser.where(profile_id_new: 3).update_all(name: 'new name')
+      end
+    end
+  end
+
+  def test_filter_and_update_all_aliased_column
+    assert_queries_and_rollback([
+      "UPDATE `users` SET `users`.`profile_id` = 222 WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+    ]) do
+      assert_equal 1, Users::AgentUser.where(profile_id_new: 3).update_all(profile_id: 222)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries_and_rollback([
+        "UPDATE `users` SET `users`.`profile_id` = 222 WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+        "UPDATE `users` SET `users`.`profile_id_new` = 222 WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3",
+      ]) do
+        assert_equal 1, Users::AgentUser.where(profile_id_new: 3).update_all(profile_id: 222)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries_and_rollback([
+        "UPDATE `users` SET `users`.`profile_id_new` = 222 WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3",
+        "UPDATE `users` SET `users`.`profile_id` = 222 WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3",
+      ]) do
+        assert_equal 1, Users::AgentUser.where(profile_id_new: 3).update_all(profile_id: 222)
+      end
+    end
+  end
 end
