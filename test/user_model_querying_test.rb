@@ -590,4 +590,124 @@ class UserModelQueryingTest < Minitest::Test
       end
     end
   end
+
+  def test_exists?
+    assert_queries([
+      'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id` = 1 LIMIT 1',
+    ]) do
+      assert_equal true, User.where(profile_id_new: 1).exists?
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id` = 1 LIMIT 1',
+        'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id_new` = 1 LIMIT 1',
+      ]) do
+        assert_equal true, User.where(profile_id_new: 1).exists?
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id_new` = 1 LIMIT 1',
+        'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id` = 1 LIMIT 1',
+      ]) do
+        assert_equal true, User.where(profile_id_new: 1).exists?
+      end
+    end
+  end
+
+  def test_or_query_exists?
+    assert_queries([
+      'SELECT 1 AS one FROM `users` WHERE (`users`.`profile_id` = 1 OR `users`.`profile_id` = 2) LIMIT 1',
+    ]) do
+      assert_equal true, User.where(profile_id_new: 1).or(User.where(profile_id: 2)).exists?
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        'SELECT 1 AS one FROM `users` WHERE (`users`.`profile_id` = 1 OR `users`.`profile_id` = 2) LIMIT 1',
+        'SELECT 1 AS one FROM `users` WHERE (`users`.`profile_id_new` = 1 OR `users`.`profile_id_new` = 2) LIMIT 1',
+      ]) do
+        assert_equal true, User.where(profile_id_new: 1).or(User.where(profile_id: 2)).exists?
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        'SELECT 1 AS one FROM `users` WHERE (`users`.`profile_id_new` = 1 OR `users`.`profile_id_new` = 2) LIMIT 1',
+        'SELECT 1 AS one FROM `users` WHERE (`users`.`profile_id` = 1 OR `users`.`profile_id` = 2) LIMIT 1',
+      ]) do
+        assert_equal true, User.where(profile_id_new: 1).or(User.where(profile_id: 2)).exists?
+      end
+    end
+  end
+
+  def test_empty?
+    assert_queries([
+      'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id` = 1 LIMIT 1',
+    ]) do
+      assert_equal false, User.where(profile_id_new: 1).empty?
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id` = 1 LIMIT 1',
+        'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id_new` = 1 LIMIT 1',
+      ]) do
+        assert_equal false, User.where(profile_id_new: 1).empty?
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id_new` = 1 LIMIT 1',
+        'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id` = 1 LIMIT 1',
+      ]) do
+        assert_equal false, User.where(profile_id_new: 1).empty?
+      end
+    end
+  end
+
+  def test_any?
+    assert_queries([
+      'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id` = 1 LIMIT 1',
+    ]) do
+      assert_equal true, User.where(profile_id_new: 1).any?
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id` = 1 LIMIT 1',
+        'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id_new` = 1 LIMIT 1',
+      ]) do
+        assert_equal true, User.where(profile_id_new: 1).any?
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id_new` = 1 LIMIT 1',
+        'SELECT 1 AS one FROM `users` WHERE `users`.`profile_id` = 1 LIMIT 1',
+      ]) do
+        assert_equal true, User.where(profile_id_new: 1).any?
+      end
+    end
+  end
 end

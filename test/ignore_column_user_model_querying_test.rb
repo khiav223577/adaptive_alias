@@ -590,4 +590,124 @@ class IgnoreColumnUserModelQueryingTest < Minitest::Test
       end
     end
   end
+
+  def test_exists?
+    assert_queries([
+      "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5 LIMIT 1",
+    ]) do
+      assert_equal true, Users::IgnoreColumnUser.where(profile_id_new: 5).exists?
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5 LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id_new` = 5 LIMIT 1",
+      ]) do
+        assert_equal true, Users::IgnoreColumnUser.where(profile_id_new: 5).exists?
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id_new` = 5 LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5 LIMIT 1",
+      ]) do
+        assert_equal true, Users::IgnoreColumnUser.where(profile_id_new: 5).exists?
+      end
+    end
+  end
+
+  def test_or_query_exists?
+    assert_queries([
+      "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND (`users`.`profile_id` = 5 OR `users`.`profile_id` IS NULL) LIMIT 1",
+    ]) do
+      assert_equal true, Users::IgnoreColumnUser.where(profile_id_new: 5).or(Users::IgnoreColumnUser.where(profile_id: nil)).exists?
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND (`users`.`profile_id` = 5 OR `users`.`profile_id` IS NULL) LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND (`users`.`profile_id_new` = 5 OR `users`.`profile_id_new` IS NULL) LIMIT 1",
+      ]) do
+        assert_equal true, Users::IgnoreColumnUser.where(profile_id_new: 5).or(Users::IgnoreColumnUser.where(profile_id: nil)).exists?
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND (`users`.`profile_id_new` = 5 OR `users`.`profile_id_new` IS NULL) LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND (`users`.`profile_id` = 5 OR `users`.`profile_id` IS NULL) LIMIT 1",
+      ]) do
+        assert_equal true, Users::IgnoreColumnUser.where(profile_id_new: 5).or(Users::IgnoreColumnUser.where(profile_id: nil)).exists?
+      end
+    end
+  end
+
+  def test_empty?
+    assert_queries([
+      "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5 LIMIT 1",
+    ]) do
+      assert_equal false, Users::IgnoreColumnUser.where(profile_id_new: 5).empty?
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5 LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id_new` = 5 LIMIT 1",
+      ]) do
+        assert_equal false, Users::IgnoreColumnUser.where(profile_id_new: 5).empty?
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id_new` = 5 LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5 LIMIT 1",
+      ]) do
+        assert_equal false, Users::IgnoreColumnUser.where(profile_id_new: 5).empty?
+      end
+    end
+  end
+
+  def test_any?
+    assert_queries([
+      "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5 LIMIT 1",
+    ]) do
+      assert_equal true, Users::IgnoreColumnUser.where(profile_id_new: 5).any?
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5 LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id_new` = 5 LIMIT 1",
+      ]) do
+        assert_equal true, Users::IgnoreColumnUser.where(profile_id_new: 5).any?
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id_new` = 5 LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::IgnoreColumnUser' AND `users`.`profile_id` = 5 LIMIT 1",
+      ]) do
+        assert_equal true, Users::IgnoreColumnUser.where(profile_id_new: 5).any?
+      end
+    end
+  end
 end

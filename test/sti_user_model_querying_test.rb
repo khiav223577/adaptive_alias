@@ -590,4 +590,124 @@ class StiUserModelQueryingTest < Minitest::Test
       end
     end
   end
+
+  def test_exists?
+    assert_queries([
+      "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3 LIMIT 1",
+    ]) do
+      assert_equal true, Users::AgentUser.where(profile_id_new: 3).exists?
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3 LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3 LIMIT 1",
+      ]) do
+        assert_equal true, Users::AgentUser.where(profile_id_new: 3).exists?
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3 LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3 LIMIT 1",
+      ]) do
+        assert_equal true, Users::AgentUser.where(profile_id_new: 3).exists?
+      end
+    end
+  end
+
+  def test_or_query_exists?
+    assert_queries([
+      "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND (`users`.`profile_id` = 3 OR `users`.`profile_id` = 4) LIMIT 1",
+    ]) do
+      assert_equal true, Users::AgentUser.where(profile_id_new: 3).or(Users::AgentUser.where(profile_id: 4)).exists?
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND (`users`.`profile_id` = 3 OR `users`.`profile_id` = 4) LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND (`users`.`profile_id_new` = 3 OR `users`.`profile_id_new` = 4) LIMIT 1",
+      ]) do
+        assert_equal true, Users::AgentUser.where(profile_id_new: 3).or(Users::AgentUser.where(profile_id: 4)).exists?
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND (`users`.`profile_id_new` = 3 OR `users`.`profile_id_new` = 4) LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND (`users`.`profile_id` = 3 OR `users`.`profile_id` = 4) LIMIT 1",
+      ]) do
+        assert_equal true, Users::AgentUser.where(profile_id_new: 3).or(Users::AgentUser.where(profile_id: 4)).exists?
+      end
+    end
+  end
+
+  def test_empty?
+    assert_queries([
+      "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3 LIMIT 1",
+    ]) do
+      assert_equal false, Users::AgentUser.where(profile_id_new: 3).empty?
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3 LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3 LIMIT 1",
+      ]) do
+        assert_equal false, Users::AgentUser.where(profile_id_new: 3).empty?
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3 LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3 LIMIT 1",
+      ]) do
+        assert_equal false, Users::AgentUser.where(profile_id_new: 3).empty?
+      end
+    end
+  end
+
+  def test_any?
+    assert_queries([
+      "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3 LIMIT 1",
+    ]) do
+      assert_equal true, Users::AgentUser.where(profile_id_new: 3).any?
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3 LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3 LIMIT 1",
+      ]) do
+        assert_equal true, Users::AgentUser.where(profile_id_new: 3).any?
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries([
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id_new` = 3 LIMIT 1",
+        "SELECT 1 AS one FROM `users` WHERE `users`.`type` = 'Users::AgentUser' AND `users`.`profile_id` = 3 LIMIT 1",
+      ]) do
+        assert_equal true, Users::AgentUser.where(profile_id_new: 3).any?
+      end
+    end
+  end
 end
