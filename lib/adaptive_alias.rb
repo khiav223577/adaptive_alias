@@ -14,6 +14,7 @@ require 'adaptive_alias/hooks/relation'
 require 'adaptive_alias/hooks/active_record_core'
 require 'adaptive_alias/hooks/active_record_persistence'
 require 'adaptive_alias/hooks/calculations'
+require 'adaptive_alias/hooks/insert_all'
 
 module AdaptiveAlias
   @log_interval = 10 * 60
@@ -42,14 +43,14 @@ module AdaptiveAlias
       end
     end
 
-    def rescue_statement_invalid(relation: nil, reflection: nil, model: nil, &block)
+    def rescue_statement_invalid(relation: nil, reflection: nil, model_klass: nil, &block)
       yield
     rescue ActiveRecord::StatementInvalid => error
-      _key, patch = AdaptiveAlias.current_patches.find{|_key, patch| patch.check_matched.call(relation, reflection, model, error) }
+      _key, patch = AdaptiveAlias.current_patches.find{|_key, patch| patch.check_matched.call(relation, reflection, model_klass, error) }
       raise error if patch == nil
 
       patch.remove_and_fix_association.call(relation, reflection) do
-        return rescue_statement_invalid(relation: relation, reflection: reflection, model: model, &block)
+        return rescue_statement_invalid(relation: relation, reflection: reflection, model_klass: model_klass, &block)
       end
     end
 

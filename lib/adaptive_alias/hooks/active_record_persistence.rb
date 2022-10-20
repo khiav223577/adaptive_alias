@@ -2,14 +2,14 @@ module AdaptiveAlias
   module Hooks
     module ActiveRecordPersistence
       def _update_record
-        AdaptiveAlias.rescue_statement_invalid(model: self) do
+        AdaptiveAlias.rescue_statement_invalid(model_klass: self.class) do
           attribute_set_fix!
           super
         end
       end
 
       def _create_record(*)
-        AdaptiveAlias.rescue_statement_invalid(model: self) do
+        AdaptiveAlias.rescue_statement_invalid(model_klass: self.class) do
           attribute_set_fix!
           super
         end
