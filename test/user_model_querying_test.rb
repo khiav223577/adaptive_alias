@@ -710,4 +710,100 @@ class UserModelQueryingTest < Minitest::Test
       end
     end
   end
+
+  def test_insert_all_with_old_column
+    assert_queries_and_rollback([
+      "INSERT INTO `users` (`name`,`profile_id`) VALUES ('New User1', 1), ('New User2', 2) ON DUPLICATE KEY UPDATE `name`=`name`",
+      'SELECT `users`.`name`, `users`.`profile_id` FROM `users` ORDER BY `users`.`id` DESC LIMIT 2',
+    ]) do
+      User.insert_all([
+        { name: 'New User1', profile_id: 1 },
+        { name: 'New User2', profile_id: 2 },
+      ])
+
+      assert_equal [['New User2', 2], ['New User1', 1]], User.order(id: :desc).limit(2).pluck(:name, :profile_id)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries_and_rollback([
+        "INSERT INTO `users` (`name`,`profile_id`) VALUES ('New User1', 1), ('New User2', 2) ON DUPLICATE KEY UPDATE `name`=`name`",
+        "INSERT INTO `users` (`name`,`profile_id_new`) VALUES ('New User1', 1), ('New User2', 2) ON DUPLICATE KEY UPDATE `name`=`name`",
+        'SELECT `users`.`name`, `users`.`profile_id_new` FROM `users` ORDER BY `users`.`id` DESC LIMIT 2',
+      ]) do
+        User.insert_all([
+          { name: 'New User1', profile_id: 1 },
+          { name: 'New User2', profile_id: 2 },
+        ])
+
+        assert_equal [['New User2', 2], ['New User1', 1]], User.order(id: :desc).limit(2).pluck(:name, :profile_id)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries_and_rollback([
+        "INSERT INTO `users` (`name`,`profile_id_new`) VALUES ('New User1', 1), ('New User2', 2) ON DUPLICATE KEY UPDATE `name`=`name`",
+        "INSERT INTO `users` (`name`,`profile_id`) VALUES ('New User1', 1), ('New User2', 2) ON DUPLICATE KEY UPDATE `name`=`name`",
+        'SELECT `users`.`name`, `users`.`profile_id` FROM `users` ORDER BY `users`.`id` DESC LIMIT 2',
+      ]) do
+        User.insert_all([
+          { name: 'New User1', profile_id: 1 },
+          { name: 'New User2', profile_id: 2 },
+        ])
+
+        assert_equal [['New User2', 2], ['New User1', 1]], User.order(id: :desc).limit(2).pluck(:name, :profile_id)
+      end
+    end
+  end
+
+  def test_insert_all_with_new_column
+    assert_queries_and_rollback([
+      "INSERT INTO `users` (`name`,`profile_id`) VALUES ('New User1', 1), ('New User2', 2) ON DUPLICATE KEY UPDATE `name`=`name`",
+      'SELECT `users`.`name`, `users`.`profile_id` FROM `users` ORDER BY `users`.`id` DESC LIMIT 2',
+    ]) do
+      User.insert_all([
+        { name: 'New User1', profile_id_new: 1 },
+        { name: 'New User2', profile_id_new: 2 },
+      ])
+
+      assert_equal [['New User2', 2], ['New User1', 1]], User.order(id: :desc).limit(2).pluck(:name, :profile_id_new)
+    end
+
+    3.times do
+      # --------- do rename migration ---------
+      User.connection.rename_column :users, :profile_id, :profile_id_new
+
+      assert_queries_and_rollback([
+        "INSERT INTO `users` (`name`,`profile_id`) VALUES ('New User1', 1), ('New User2', 2) ON DUPLICATE KEY UPDATE `name`=`name`",
+        "INSERT INTO `users` (`name`,`profile_id_new`) VALUES ('New User1', 1), ('New User2', 2) ON DUPLICATE KEY UPDATE `name`=`name`",
+        'SELECT `users`.`name`, `users`.`profile_id_new` FROM `users` ORDER BY `users`.`id` DESC LIMIT 2',
+      ]) do
+        User.insert_all([
+          { name: 'New User1', profile_id_new: 1 },
+          { name: 'New User2', profile_id_new: 2 },
+        ])
+
+        assert_equal [['New User2', 2], ['New User1', 1]], User.order(id: :desc).limit(2).pluck(:name, :profile_id)
+      end
+
+      # --------- rollback rename migration ---------
+      User.connection.rename_column :users, :profile_id_new, :profile_id
+
+      assert_queries_and_rollback([
+        "INSERT INTO `users` (`name`,`profile_id_new`) VALUES ('New User1', 1), ('New User2', 2) ON DUPLICATE KEY UPDATE `name`=`name`",
+        "INSERT INTO `users` (`name`,`profile_id`) VALUES ('New User1', 1), ('New User2', 2) ON DUPLICATE KEY UPDATE `name`=`name`",
+        'SELECT `users`.`name`, `users`.`profile_id` FROM `users` ORDER BY `users`.`id` DESC LIMIT 2',
+      ]) do
+        User.insert_all([
+          { name: 'New User1', profile_id_new: 1 },
+          { name: 'New User2', profile_id_new: 2 },
+        ])
+
+        assert_equal [['New User2', 2], ['New User1', 1]], User.order(id: :desc).limit(2).pluck(:name, :profile_id)
+      end
+    end
+  end
 end
