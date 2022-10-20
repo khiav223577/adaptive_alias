@@ -69,7 +69,7 @@ module AdaptiveAlias
           end
         end
 
-        @check_matched = proc do |relation, reflection, model, error|
+        @check_matched = proc do |relation, reflection, model_klass, error|
           next false if not patch.removable
 
           # Error highlight behavior in Ruby 3.1 pollutes the error message
@@ -79,8 +79,8 @@ module AdaptiveAlias
           if ambiguous
             next false if relation and klass.table_name != relation.klass.table_name
             next false if reflection and klass.table_name != reflection.klass.table_name
-            next false if model and klass.table_name != model.class.table_name
-            next false if !relation and !reflection and !model
+            next false if model_klass and klass.table_name != model_klass.table_name
+            next false if !relation and !reflection and !model_klass
           end
 
           next false if not expected_association_err_msgs.include?(error_msg) and not ambiguous
