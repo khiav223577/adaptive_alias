@@ -1,5 +1,8 @@
 ## Change Log
 
+### [v1.3.0](https://github.com/khiav223577/adaptive_alias/compare/v1.2.1...v1.3.0) 2022/10/20
+- [#32](https://github.com/khiav223577/adaptive_alias/pull/32) [Feature] Support `insert_all` (@khiav223577)
+
 ### [v1.2.1](https://github.com/khiav223577/adaptive_alias/compare/v1.2.0...v1.2.1) 2022/10/13
 - [#31](https://github.com/khiav223577/adaptive_alias/pull/31) [Fix] Deal with `exists?` (@khiav223577)
 - [#30](https://github.com/khiav223577/adaptive_alias/pull/30) [Test] Add test cases to test raw sql query (@khiav223577)
