@@ -22,6 +22,7 @@ module AdaptiveAlias
         if @model.attribute_aliases.keys.any?{|s| @keys.include?(s) }
           @keys = @keys.map{|s| @model.attribute_aliases[s] || s }.to_set
           @inserts = @inserts.map{|insert| insert.transform_keys{|s| @model.attribute_aliases[s.to_s] || s } }
+          @keys_including_timestamps = nil
         end
       end
     end
